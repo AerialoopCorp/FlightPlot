@@ -15,7 +15,16 @@ public class PX4TrackReader extends AbstractTrackReader {
     private static final String GPOS_LAT = "GPOS.Lat";
     private static final String GPOS_LON = "GPOS.Lon";
     private static final String GPOS_ALT = "GPOS.Alt";
+    private static final String GPSP_LAT = "GPSP.Lat";
+    private static final String GPSP_LON = "GPSP.Lon";
+    private static final String GPSP_ALT = "GPSP.Alt";
+    private static final String GPSP_TYPE = "GPSP.Type";
+    private static final String ATT_PITCH = "ATT.Pitch";
+    private static final String ATT_ROLL = "ATT.Roll";
+    private static final String ATT_YAW = "ATT.Yaw";
     private static final String STAT_MAINSTATE = "STAT.MainState";
+
+    private TrackPoint prev_setpoint = new TrackPoint(0, 0, 0, 0);
 
     private String flightMode = null;
 
@@ -41,9 +50,31 @@ public class PX4TrackReader extends AbstractTrackReader {
             Number lat = (Number) data.get(GPOS_LAT);
             Number lon = (Number) data.get(GPOS_LON);
             Number alt = (Number) data.get(GPOS_ALT);
+            Number spLat = (Number) data.get(GPSP_LAT);
+            Number spLon = (Number) data.get(GPSP_LON);
+            Number spAlt = (Number) data.get(GPSP_ALT);
+            Number spType = (Number) data.get(GPSP_TYPE);
+            Number pitch = (Number) data.get(ATT_PITCH);
+            Number roll = (Number) data.get(ATT_ROLL);
+            Number heading = (Number) data.get(ATT_YAW);
+
+            if (spLat != null && spLon != null && spAlt != null) {
+                if (prev_setpoint.lat != spLat.doubleValue() || prev_setpoint.lon != spLon.doubleValue()) {
+                    prev_setpoint = new TrackPoint(spLat.doubleValue(), spLon.doubleValue(), spAlt.doubleValue(),
+                            t + reader.getUTCTimeReferenceMicroseconds());
+                    prev_setpoint.setpoint = true;
+                    prev_setpoint.spType = spType.intValue();
+                    return prev_setpoint;
+                }
+            }
+
             if (lat != null && lon != null && alt != null) {
-                return new TrackPoint(lat.doubleValue(), lon.doubleValue(), alt.doubleValue() + config.getAltitudeOffset(),
+                TrackPoint point = new TrackPoint(lat.doubleValue(), lon.doubleValue(), alt.doubleValue() + config.getAltitudeOffset(),
                         t + reader.getUTCTimeReferenceMicroseconds(), flightMode);
+                point.radPitch = pitch.doubleValue();
+                point.radRoll = roll.doubleValue();
+                point.heading = heading.doubleValue();
+                return point;
             }
         }
         return null;
@@ -69,6 +100,8 @@ public class PX4TrackReader extends AbstractTrackReader {
                     return "AUTO_ACRO";
                 case 7:
                     return "AUTO_OFFBOARD";
+                case 8:
+                    return "STABILIZED";
                 default:
                     return String.format("UNKNOWN(%s)", flightMode.intValue());
             }

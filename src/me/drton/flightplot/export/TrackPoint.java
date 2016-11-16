@@ -9,6 +9,11 @@ public class TrackPoint {
     public final double alt;        /// altitude AMLS
     public final long time;         /// unix time in milliseconds
     public final String flightMode; /// flight mode
+    public boolean setpoint;
+    public int spType;
+    public double radRoll;
+    public double radPitch;
+    public double heading;
 
     public TrackPoint(double lat, double lon, double alt, long time, String flightMode) {
         this.lat = lat;

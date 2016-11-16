@@ -1,7 +1,10 @@
 package me.drton.flightplot.export;
 
+import javax.sound.midi.Track;
 import java.io.*;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by ada on 14.01.14.
@@ -13,6 +16,7 @@ public abstract class AbstractTrackExporter implements TrackExporter {
     protected Writer writer;
     protected int trackPart = 0;
     protected String flightMode = null;
+    protected ArrayList<TrackPoint> setpoints = new ArrayList<TrackPoint>();
 
     @Override
     public void export(TrackReader trackReader, TrackExporterConfiguration config, File file, String title) throws IOException {
@@ -28,6 +32,12 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 if (point == null) {
                     break;
                 }
+
+                if (point.setpoint) {
+                    setpoints.add(point);
+                    continue;
+                }
+
                 if (!trackStarted || (point.flightMode != null && !point.flightMode.equals(flightMode))) {
                     if (trackStarted) {
                         writePoint(point);  // Write this point at the end of previous track to avoid interruption of track
@@ -46,9 +56,13 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 }
                 writePoint(point);
             }
+
             if (trackStarted) {
                 writeTrackPartEnd();
             }
+
+            writeSetpoints(setpoints);
+
             writeEnd();
         } catch (Exception e) {
             e.printStackTrace();
@@ -66,4 +80,8 @@ public abstract class AbstractTrackExporter implements TrackExporter {
     protected abstract void writeTrackPartEnd() throws IOException;
 
     protected abstract void writeEnd() throws IOException;
+
+    protected void writeSetpoints(List<TrackPoint> setpoints) throws IOException {
+
+    }
 }
