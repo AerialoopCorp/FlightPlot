@@ -71,9 +71,13 @@ public class PX4TrackReader extends AbstractTrackReader {
             if (lat != null && lon != null && alt != null) {
                 TrackPoint point = new TrackPoint(lat.doubleValue(), lon.doubleValue(), alt.doubleValue() + config.getAltitudeOffset(),
                         t + reader.getUTCTimeReferenceMicroseconds(), flightMode);
-                point.radPitch = pitch.doubleValue();
-                point.radRoll = roll.doubleValue();
-                point.heading = heading.doubleValue();
+
+                if (pitch != null && roll != null && heading != null) {
+                    point.radPitch = pitch.doubleValue();
+                    point.radRoll = roll.doubleValue();
+                    point.heading = heading.doubleValue();
+                }
+
                 return point;
             }
         }
