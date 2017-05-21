@@ -891,7 +891,8 @@ public class FlightPlot {
                             loggedMsg.message });
                 }
             } else if (logFileNameLower.endsWith(".mavlink")) {
-                logReaderNew = new MAVLinkLogReader(logFileName, new MAVLinkSchema("common.xml"));
+                logReaderNew = new MAVLinkLogReader(logFileName,
+                        new MAVLinkSchema(FlightPlot.class.getClassLoader().getResourceAsStream("common.xml")));
             } else {
                 setStatus("Log format not supported: " + logFileName);
                 return;

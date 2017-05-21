@@ -37,6 +37,9 @@
             <fileset dir="out/production/FlightPlot">
                 <include name="**/*.class"/>
             </fileset>
+            <fileset dir=".">
+                <include name="common.xml"/>
+            </fileset>
             <zipgroupfileset dir="lib" includes="jfreechart-*.jar"/>
             <zipgroupfileset dir="lib" includes="jcommon-*.jar"/>
             <zipgroupfileset dir="lib" includes="forms_rt.jar"/>
