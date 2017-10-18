@@ -548,6 +548,8 @@ public class FlightPlot {
                         presetsPref.put(preset.getTitle(), preset.packJSONObject().toString());
                     } catch (IOException e) {
                         e.printStackTrace();
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
                     }
                 }
             }

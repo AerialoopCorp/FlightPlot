@@ -34,6 +34,7 @@ public class ProcessorsList {
         addProcessorClass(EulerFromQuaternion.class);
         addProcessorClass(Text.class);
         addProcessorClass(ParameterUpdate.class);
+        addProcessorClass(TecsAnalysis.class);
     }
 
     private void addProcessorClass(Class<? extends PlotProcessor> processorClass) {
