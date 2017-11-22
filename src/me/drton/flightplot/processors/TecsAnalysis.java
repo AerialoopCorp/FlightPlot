@@ -157,7 +157,7 @@ public class TecsAnalysis extends PlotProcessor {
         double _STEdot_max = param_climbMax * CONSTANTS_ONE_G;
         double _STEdot_min = -param_sinkMax * CONSTANTS_ONE_G;
         double STEdot_dem = Math.min(Math.max(_SPEdot_dem + _SKEdot_dem, _STEdot_min), _STEdot_max);
-        double _rollComp = 15;
+        double _rollComp = param_rollComp;
 
         double ff_throttle = 0;
         double cosPhi = Math.cos(roll);
