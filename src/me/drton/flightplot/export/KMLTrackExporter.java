@@ -74,7 +74,7 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("<Style id=\"setpoint\">\n");
         writer.write("<LineStyle>\n");
         writer.write("<color>7fffffff</color>\n");
-        writer.write("<width>8</width>\n");
+        writer.write("<width>6</width>\n");
         writer.write("</LineStyle>\n");
         writer.write("</Style>\n");
     }
@@ -86,14 +86,16 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("<name>" + trackPartName + "</name>\n");
         writer.write("<description></description>\n");
         writer.write("<styleUrl>#" + styleId + "</styleUrl>\n");
-        writer.write("<MultiGeometry>\n");
-        //writer.write("<gx:Track id=\"" + trackPartName + "\">\n");
-        //writer.write("<altitudeMode>absolute</altitudeMode>\n");
-        //writer.write("<gx:interpolate>0</gx:interpolate>\n");
+
+        /*writer.write("<MultiGeometry>\n");*/
+
+        writer.write("<gx:Track id=\"" + trackPartName + "\">\n");
+        writer.write("<altitudeMode>absolute</altitudeMode>\n");
+        writer.write("<gx:interpolate>0</gx:interpolate>\n");
     }
 
     protected void writePoint(TrackPoint point) throws IOException {
-        double z1 = 5 * Math.sin(point.radRoll);
+        /*double z1 = 5 * Math.sin(point.radRoll);
         double z2 = -z1;
         double y1 = -5 * Math.sin(point.heading + 90);
         double y2 = -y1;
@@ -114,11 +116,10 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("</coordinates>\n");
         //writer.write("</LinearRing>\n");
         //writer.write("</outerBoundaryIs>\n");
-        writer.write("</LineString>\n");
+        writer.write("</LineString>\n");*/
 
-
-        //writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
-        //writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.lon, point.lat, point.alt));
+        writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
+        writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.lon, point.lat, point.alt));
     }
 
     private double[] reproject(TrackPoint ref, double x, double y, double z) {
@@ -141,8 +142,10 @@ public class KMLTrackExporter extends AbstractTrackExporter {
     }
 
     protected void writeTrackPartEnd() throws IOException {
-        //writer.write("</gx:Track>\n");
-        writer.write("</MultiGeometry>\n");
+        writer.write("</gx:Track>\n");
+
+        /*writer.write("</MultiGeometry>\n");*/
+
         writer.write("</Placemark>\n");
     }
 
@@ -169,6 +172,15 @@ public class KMLTrackExporter extends AbstractTrackExporter {
     protected void writeSetpoints(List<TrackPoint> setpoints) throws IOException {
         Iterator<TrackPoint> it = setpoints.iterator();
         int index = 0;
+
+        writer.write("<Placemark>\n");
+        writer.write("<name>mission</name>\n");
+        writer.write("<description></description>\n");
+        writer.write("<styleUrl>#setpoint</styleUrl>\n");
+        writer.write("<gx:Track id=\"mission\">\n");
+        writer.write("<altitudeMode>absolute</altitudeMode>\n");
+        writer.write("<gx:interpolate>0</gx:interpolate>\n");
+
         while(it.hasNext()) {
             TrackPoint point = it.next();
 
@@ -186,17 +198,22 @@ public class KMLTrackExporter extends AbstractTrackExporter {
                 name += ": Idle";
             }
 
-            writer.write("<Placemark>\n");
+            /*writer.write("<Placemark>\n");
             writer.write("<name>" + name + "</name>\n");
             writer.write("<description></description>\n");
             writer.write("<styleUrl>#setpoint</styleUrl>\n");
             writer.write("<Point>\n");
-            writer.write("<altitudeMode>absolute</altitudeMode>\n");
-            writer.write(String.format(Locale.ROOT, "<coordinates>%.10f %.10f %.2f</coordinates>\n", point.lon, point.lat, point.alt));
-            writer.write("</Point>\n");
-            writer.write("</Placemark>\n");
+            writer.write("<altitudeMode>absolute</altitudeMode>\n");*/
+            writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
+            writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.lon, point.lat, point.alt));
+            //writer.write(String.format(Locale.ROOT, "<coordinates>%.10f %.10f %.2f</coordinates>\n", point.lon, point.lat, point.alt));
+            /*writer.write("</Point>\n");
+            writer.write("</Placemark>\n");*/
 
             index++;
         }
+
+        writer.write("</gx:Track>\n");
+        writer.write("</Placemark>\n");
     }
 }

@@ -60,11 +60,18 @@ public class PX4TrackReader extends AbstractTrackReader {
 
             if (spLat != null && spLon != null && spAlt != null) {
                 if (prev_setpoint.lat != spLat.doubleValue() || prev_setpoint.lon != spLon.doubleValue()) {
+                    /*
+                     * Return setpoint with previous coordinates but with current SP altitude since target altitude
+                     * is slew-rates (FOH). Unfortunately we will miss the last setpoint of a mission.
+                     */
+                    TrackPoint point = new TrackPoint(prev_setpoint.lat, prev_setpoint.lon, spAlt.doubleValue(),
+                            t + reader.getUTCTimeReferenceMicroseconds());
+                    point.setpoint = true;
+                    point.spType = spType.intValue();
+
                     prev_setpoint = new TrackPoint(spLat.doubleValue(), spLon.doubleValue(), spAlt.doubleValue(),
                             t + reader.getUTCTimeReferenceMicroseconds());
-                    prev_setpoint.setpoint = true;
-                    prev_setpoint.spType = spType.intValue();
-                    return prev_setpoint;
+                    return point;
                 }
             }
 
