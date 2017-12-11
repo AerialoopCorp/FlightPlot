@@ -473,6 +473,60 @@
                <entry value="16777216" name="MAV_SYS_STATUS_LOGGING">
                     <description>0x1000000 Logging</description>
                </entry>
+               <entry value="33554432" name="MAV_SYS_STATUS_SENSOR_BATTERY">
+                    <description>0x2000000 Battery</description>
+               </entry>
+               <entry value="67108864" name="MAV_SYS_STATUS_STORAGE">
+                    <description>0x4000000 Onboard storage health</description>
+               </entry>
+               <entry value="134217728" name="MAV_SYS_STATUS_GYRO_CONSISTENT">
+                    <description>0x8000000 Onboard storage health</description>
+               </entry>
+               <entry value="268435456" name="MAV_SYS_STATUS_ACCEL_CONSISTENT">
+                    <description>0x10000000 Onboard storage health</description>
+               </entry>
+               <entry value="2147483648" name="MAV_SYS_STATUS_SAFETY">
+                    <description>0x80000000 Safety</description>
+               </entry>
+          </enum>
+          <enum name="MAV_FAILURE">
+               <description>[WIP] These encode the high-level failures that might occurr</description>
+               <entry value="1" name="MAV_FAILURE_FW_ENGINE">
+                    <description>Loss of fixed-wing thrust</description>
+               </entry>
+               <entry value="2" name="MAV_FAILURE_VTOL_TRANSITION">
+                    <description>VTOL fixed-wing flight not possible or aborted</description>
+               </entry>
+               <entry value="4" name="MAV_FAILURE_MISSION">
+                    <description>Mission cannot be continued for some reason</description>
+               </entry>
+               <entry value="8" name="MAV_FAILURE_GPOS">
+                    <description>Global position not available</description>
+               </entry>
+               <entry value="16" name="MAV_FAILURE_ALTITUDE">
+                    <description>Unexpected loss of altitude</description>
+               </entry>
+               <entry value="32" name="MAV_FAILURE_MIN_ALTITUDE">
+                    <description>Minimum altitude violation</description>
+               </entry>
+               <entry value="64" name="MAV_FAILURE_AIRSPEED">
+                    <description>Airspeed not available</description>
+               </entry>
+               <entry value="128" name="MAV_FAILURE_BATTERY_LOW">
+                    <description>Airspeed not available</description>
+               </entry>
+               <entry value="256" name="MAV_FAILURE_BATTERY_CRITICAL">
+                    <description>Airspeed not available</description>
+               </entry>
+          </enum>
+          <enum name="MAV_LOG_ENTRY_INFO">
+               <description>[WIP] These encode log file information</description>
+               <entry value="1" name="MAV_LOG_ENTRY_INFO_ULG">
+                    <description>This log is in ULOG format</description>
+               </entry>
+               <entry value="2" name="MAV_LOG_ENTRY_INFO_INAIR">
+                    <description>In this log the vehicle was in-air</description>
+               </entry>
           </enum>
           <enum name="MAV_FRAME">
                <entry value="0" name="MAV_FRAME_GLOBAL">
@@ -1082,12 +1136,12 @@
 
                <entry name="MAV_CMD_DO_MOUNT_CONTROL" value="205">
                    <description>Mission command to control a camera or antenna mount</description>
-                   <param index="1">pitch (WIP: DEPRECATED: or lat in degrees) depending on mount mode.</param>
-                   <param index="2">roll (WIP: DEPRECATED: or lon in degrees) depending on mount mode.</param>
-                   <param index="3">yaw (WIP: DEPRECATED: or alt in meters) depending on mount mode.</param>
-                   <param index="4">WIP: alt in meters depending on mount mode.</param>
-                   <param index="5">WIP: latitude in degrees * 1E7, set if appropriate mount mode.</param>
-                   <param index="6">WIP: longitude in degrees * 1E7, set if appropriate mount mode.</param>
+                   <param index="1">pitch in degrees</param>
+                   <param index="2">roll in degrees</param>
+                   <param index="3">yaw in degrees</param>
+                   <param index="4">zoom from -1 to 1 (AirRails)</param>
+                   <param index="5">Empty</param>
+                   <param index="6">Empty</param>
                    <param index="7">MAV_MOUNT_MODE enum value</param>
                </entry>
 
@@ -2383,22 +2437,22 @@
           <enum name="LICENSE_TYPE">
               <description></description>
               <entry value="0" name="NO_LICENSING">
-                  <description></description>
+                  <description>Free version</description>
               </entry>
               <entry value="1" name="CHECKING">
-                  <description></description>
+                  <description>Checking license</description>
               </entry>
-              <entry value="2" name="UNLICENSED">
-                  <description></description>
+              <entry value="2" name="INVALID">
+                  <description>Invalid license set</description>
               </entry>
               <entry value="3" name="TRIAL">
-                  <description></description>
+                  <description>In trial mode</description>
               </entry>
               <entry value="4" name="VALID">
-                  <description></description>
+                  <description>Valid license set</description>
               </entry>
               <entry value="5" name="EXPIRED">
-                  <description></description>
+                  <description>Trial or actual license is expired</description>
               </entry>
           </enum>
      </enums>
@@ -3634,6 +3688,39 @@
             <field type="float" name="size_y">Size in radians of target along y-axis</field>
         </message>
 
+        <message id="225" name="CAMERA_IMAGE_CAPTURED_V1">
+          <description>Information about a captured image</description>
+          <field type="uint32_t" name="time_boot_ms">Timestamp (milliseconds since system boot)</field>
+          <field type="uint64_t" name="time_utc">Timestamp (microseconds since UNIX epoch) in UTC. 0 for unknown.</field>
+          <field type="uint8_t" name="camera_id">Camera ID (1 for first, 2 for second, etc.)</field>
+          <field type="int32_t" name="lat">Latitude, expressed as degrees * 1E7 where image was taken</field>
+          <field type="int32_t" name="lon">Longitude, expressed as degrees * 1E7 where capture was taken</field>
+          <field type="int32_t" name="alt">Altitude in meters, expressed as * 1E3 (AMSL, not WGS84) where image was taken</field>
+          <field type="int32_t" name="relative_alt">Altitude above ground in meters, expressed as * 1E3 where image was taken</field>
+          <field type="float[4]" name="q">Quaternion of camera orientation (w, x, y, z order, zero-rotation is 0, 0, 0, 0)</field>
+          <field type="int32_t" name="image_index">Zero based index of this image (image count since armed -1)</field>
+          <field type="int8_t" name="capture_result">Boolean indicating success (1) or failure (0) while capturing this image.</field>
+          <field type="char[205]" name="file_url">URL of image taken. Either local storage or http://foo.jpg if camera provides an HTTP interface.</field>
+        </message>
+        <message id="226" name="EXTENDED_LOG_ENTRY">
+           <description>Reply to LOG_REQUEST_LIST</description>
+           <field type="uint16_t" name="id">Log id</field>
+           <field type="uint16_t" name="num_logs">Total number of logs</field>
+           <field type="uint16_t" name="last_log_num">High log number</field>
+           <field type="uint32_t" name="time_utc">UTC timestamp of log in seconds since 1970, or 0 if not available</field>
+           <field type="uint32_t" name="size">Size of the log (may be approximate) in bytes</field>
+           <field type="uint8_t" name="info" enum="MAV_LOG_ENTRY_INFO">See MAV_LOG_ENTRY_INFO</field>
+           <field type="uint16_t" name="full_log_id">ID of full sized log (this is a tiny one)</field>
+         </message>
+        <message id="227" name="EXTENDED_HUD">
+            <description>[WIP] Extended HUD information</description>
+            <field type="uint16_t[2]" name="rpm">RPM sensors, from 0 to MAX_INT_16</field>
+            <field type="uint16_t[2]" name="throttle">Throttle in percent from -100 to 100. 1 is main or multirotor thrust, 2 is secondary or fixed-wing thrust.</field>
+            <field type="uint32_t" name="failures" enum="MAV_FAILURE">See MAV_FAILURE</field>
+            <field type="uint32_t" name="log_time_remaining">Remaining amount of seconds for flight logging until storage is full.</field>
+            <field name="temperature" type="int16_t">Autopilot temperature (centi-degrees C)</field>
+            <field name="temperature_air" type="int16_t">Air temperature (centi-degrees C) from airspeed sensor</field>
+        </message>
         <message id="228" name="MISSION_CHECK">
              <description>This message is emitted as response to MISSION_REQUEST_LIST by the MAV and to initiate a write transaction. The GCS can then request the individual mission item based on the knowledge of the total number of MISSIONs.</description>
              <field type="uint8_t" name="target_system">System ID</field>
