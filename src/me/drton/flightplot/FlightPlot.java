@@ -290,7 +290,7 @@ public class FlightPlot {
 
         // Open Log Dialog
         FileNameExtensionFilter[] logExtensionfilters = new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("All known Log files (*.px4log, *.bin, *.ulg)", "px4log", "bin", "ulg"),
+                new FileNameExtensionFilter("All known Log files (*.px4log, *.bin, *.ulg, *.mavlink)", "px4log", "bin", "ulg", "mavlink"),
                 new FileNameExtensionFilter("PX4/APM Log (*.px4log, *.bin)", "px4log", "bin"),
                 new FileNameExtensionFilter("ULog (*.ulg)", "ulg"),
                 new FileNameExtensionFilter("MAVLink Logs (*.mavlink)", "mavlink")
@@ -891,7 +891,8 @@ public class FlightPlot {
                             loggedMsg.message });
                 }
             } else if (logFileNameLower.endsWith(".mavlink")) {
-                logReaderNew = new MAVLinkLogReader(logFileName,new MAVLinkSchema("common.xml"));
+                //logReaderNew = new MAVLinkLogReader(logFileName,new MAVLinkSchema("common.xml"));
+                logReaderNew = new MAVLinkLogReader(logFileName, new MAVLinkSchema(FlightPlot.class.getClassLoader().getResourceAsStream("common.xml")));
             } else {
                 setStatus("Log format not supported: " + logFileName);
                 return;
