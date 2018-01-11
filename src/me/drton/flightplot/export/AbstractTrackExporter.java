@@ -16,7 +16,6 @@ public abstract class AbstractTrackExporter implements TrackExporter {
     protected Writer writer;
     protected int trackPart = 0;
     protected String flightMode = null;
-    protected ArrayList<TrackPoint> setpoints = new ArrayList<TrackPoint>();
 
     @Override
     public void export(TrackReader trackReader, TrackExporterConfiguration config, File file, String title) throws IOException {
@@ -25,6 +24,8 @@ public abstract class AbstractTrackExporter implements TrackExporter {
         this.writer = new BufferedWriter(new FileWriter(file));
         this.title = title;
         boolean trackStarted = false;
+        ArrayList<TrackPoint> setpoints = new ArrayList<TrackPoint>();
+
         try {
             writeStart();
             while (true) {
