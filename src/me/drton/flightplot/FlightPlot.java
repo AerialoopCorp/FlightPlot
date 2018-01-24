@@ -1048,12 +1048,14 @@ public class FlightPlot {
                     }
                 });
                 for (Map.Entry<String, Object> param : paramsList) {
-                    int typeID = 0;
                     Object value = param.getValue();
+
+                    // Export parameter in QGC (old?) format
                     if (value instanceof Float) {
-                        typeID = 1;
+                        fileWriter.write(String.format("1\t1\t%s\t%.15f\t9\n", param.getKey(), param.getValue()));
+                    } else {
+                        fileWriter.write(String.format("1\t1\t%s\t%d\t6\n", param.getKey(), param.getValue()));
                     }
-                    fileWriter.write(String.format("%s\t%s\t%s\n", param.getKey(), typeID, param.getValue()));
                 }
                 fileWriter.close();
             } catch (Exception e) {
