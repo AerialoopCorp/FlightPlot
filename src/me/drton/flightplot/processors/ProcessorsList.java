@@ -35,6 +35,7 @@ public class ProcessorsList {
         addProcessorClass(Text.class);
         addProcessorClass(ParameterUpdate.class);
         addProcessorClass(TecsAnalysis.class);
+        addProcessorClass(AirspeedFromDiffPress.class);
     }
 
     private void addProcessorClass(Class<? extends PlotProcessor> processorClass) {
