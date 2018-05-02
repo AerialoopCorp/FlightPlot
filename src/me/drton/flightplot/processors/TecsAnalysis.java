@@ -17,6 +17,7 @@ public class TecsAnalysis extends PlotProcessor {
     private double param_pitchDamp;
     private double param_thrCruise;
     private double param_thrMax;
+    private double param_thrMin;
     private double param_climbMax;
     private double param_sinkMax;
     private double param_rollComp;
@@ -33,6 +34,7 @@ public class TecsAnalysis extends PlotProcessor {
         params.put("Time Const", 5.0);
         params.put("Pitch Damp", 0.0);
         params.put("Thr Max", 1.0);
+        params.put("Thr Min", 0.0);
         params.put("Thr Cruise", 0.5);
         params.put("Climb Max", 3.0);
         params.put("Sink Max", 3.0);
@@ -48,6 +50,7 @@ public class TecsAnalysis extends PlotProcessor {
         param_pitchDamp = (Double) parameters.get("Pitch Damp");
         param_timeConst = (Double) parameters.get("Time Const");
         param_thrMax = (Double) parameters.get("Thr Max");
+        param_thrMin = (Double) parameters.get("Thr Min");
         param_thrCruise = (Double) parameters.get("Thr Cruise");
         param_climbMax = (Double) parameters.get("Climb Max");
         param_sinkMax = (Double) parameters.get("Sink Max");
@@ -73,7 +76,12 @@ public class TecsAnalysis extends PlotProcessor {
         double energy_error = 0;
         double energy_rate_error = 0;
 
-        Object temp = update.get("TECS.ASP");
+        Object temp = update.get("ATT.Roll");
+        if (temp != null && temp instanceof Number) {
+            roll = ((Number)temp).doubleValue();
+        }
+
+        temp = update.get("TECS.ASP");
         if (temp != null && temp instanceof Number) {
             _hgt_dem_adj = ((Number)temp).doubleValue();
         } else {
@@ -140,11 +148,6 @@ public class TecsAnalysis extends PlotProcessor {
             return;
         }
 
-        temp = update.get("ATT.Roll");
-        if (temp != null && temp instanceof Number) {
-            roll = ((Number)temp).doubleValue();
-        }
-
         double _SPE_dem = _hgt_dem_adj * CONSTANTS_ONE_G;
         double _SKE_dem = 0.5 * _TAS_dem_adj * _TAS_dem_adj;
         double _SPEdot_dem = _hgt_rate_dem * CONSTANTS_ONE_G;
@@ -158,6 +161,8 @@ public class TecsAnalysis extends PlotProcessor {
         double _STEdot_min = -param_sinkMax * CONSTANTS_ONE_G;
         double STEdot_dem = Math.min(Math.max(_SPEdot_dem + _SKEdot_dem, _STEdot_min), _STEdot_max);
         double _rollComp = param_rollComp;
+        double _STEdot_error = STEdot_dem - _SPEdot - _SKEdot;
+        // FIXME: _STEdot_error needs to be low-passed
 
         double ff_throttle = 0;
         double cosPhi = Math.cos(roll);
@@ -166,10 +171,10 @@ public class TecsAnalysis extends PlotProcessor {
             ff_throttle = param_thrCruise + STEdot_dem / _STEdot_max * (param_thrMax - param_thrCruise);
 
         } else {
-            ff_throttle = param_thrCruise - STEdot_dem / _STEdot_min * param_thrCruise;
+            ff_throttle = param_thrCruise - STEdot_dem / _STEdot_min * (param_thrCruise - param_thrMin);
         }
 
-        double K_STE2Thr = 1 / (param_thrTimeConst * (_STEdot_max - _STEdot_min));
+        double K_STE2Thr = 1.0 / (param_thrTimeConst * (_STEdot_max - _STEdot_min));
         double pd_throttle = (energy_error + energy_rate_error * param_thrDamp) * K_STE2Thr;
 
         String[] showStr = ((String) parameters.get("Show")).split(" ");
@@ -177,6 +182,30 @@ public class TecsAnalysis extends PlotProcessor {
         for (int axis = 0; axis < showStr.length; axis++) {
             String axisName = showStr[axis];
             double value = 0;
+
+            if ("roll".equals(axisName)) {
+                value = roll;
+            }
+
+            if ("_SPE_err".equals(axisName)) {
+                value = _SPE_dem - _SPE_est;
+            }
+
+            if ("_SKE_err".equals(axisName)) {
+                value = _SKE_dem - _SKE_est;
+            }
+
+            if ("_STE_err".equals(axisName)) {
+                value = _SPE_dem - _SPE_est + _SKE_dem - _SKE_est;
+            }
+
+            if ("_STEdot_dem".equals(axisName)) {
+                value = STEdot_dem;
+            }
+
+            if ("_STEdot_error".equals(axisName)) {
+                value = _STEdot_error;
+            }
 
             if ("_SPE_dem".equals(axisName)) {
                 value = _SPE_dem;
