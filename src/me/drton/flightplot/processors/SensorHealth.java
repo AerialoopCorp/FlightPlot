@@ -53,8 +53,8 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(67108864l, "STORAGE");
         sensors.put(134217728l, "GYRO_CONSISTENT");
         sensors.put(268435456l, "ACCEL_CONSISTENT");
-        sensors.put(536870912l, "undefined");
-        sensors.put(1073741824l, "undefined");
+        //sensors.put(536870912l, "undefined");
+        //sensors.put(1073741824l, "undefined");
         sensors.put(2147483648l, "SAFETY");
     }
 
@@ -67,18 +67,28 @@ public class SensorHealth extends PlotProcessor {
             if (sens == 0) {
                 diff = Long.MAX_VALUE;
             }
+
+            StringBuffer marker = new StringBuffer();
             for (int a = 0; a < 32; a++) {
-                boolean val = (diff & 1 << a) > 0;
-                if (val) {
+                boolean isDifferent = (diff & 1 << a) > 0;
+                String sensor = sensors.get(1l << a);
+
+                if (isDifferent && sensor != null) {
+                    boolean val = (temp & 1 << a) > 0;
                     if (sens == 0) {
-                        System.out.println(String.format("%s: %b", sensors.get(1l << a), (temp & 1 << a) > 0));
+                        // only add initialized "false" sensors
+                        if (!val) {
+                            marker.append(String.format("%s: %b | ", sensor, val));
+                        }
 
                     } else {
                         // only mark changes
-                        addMarker(0, time, String.format("%s: %b", sensors.get(1l << a), (temp & 1 << a) > 0));
+                        marker.append(String.format("%s: %b | ", sensor, val));
                     }
                 }
             }
+
+            addMarker(0, time, marker.substring(0, marker.length() - 3));
             sens = temp;
         }
     }
