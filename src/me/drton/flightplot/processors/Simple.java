@@ -14,7 +14,6 @@ public class Simple extends PlotProcessor {
     protected double param_Offset;
     protected double param_Delay;
     protected LowPassFilter[] lowPassFilters;
-    private long sens = 0;
 
     @Override
     public Map<String, Object> getDefaultParameters() {
@@ -58,30 +57,13 @@ public class Simple extends PlotProcessor {
             String field = param_Fields[i];
             Object v = update.get(field);
             if (v != null && v instanceof Number) {
-                if (field.equals("HEAL.Sens") && ((Number)v).longValue() != sens) {
-                    long temp = ((Number)v).longValue();
-                    long diff = sens ^ temp;
-                    if (sens == 0) {
-                        diff = Long.MAX_VALUE;
-                    }
-                    System.out.print(String.format("%f] ", time));
-                    for (int a = 0; a < 32; a++) {
-                        boolean val = (diff & 1 << a) > 0;
-                        if (val) {
-                            System.out.print(String.format("%d: %b, ", 1 << a, (temp & 1 << a) > 0));
-                        }
-                    }
-                    System.out.print("\n");
-                    sens = temp;
+                double out = preProcessValue(i, time, ((Number) v).doubleValue());
+                if (Double.isNaN(out)) {
+                    addPoint(i, time, Double.NaN);
                 } else {
-                    double out = preProcessValue(i, time, ((Number) v).doubleValue());
-                    if (Double.isNaN(out)) {
-                        addPoint(i, time, Double.NaN);
-                    } else {
-                        out = lowPassFilters[i].getOutput(time, out);
-                        out = postProcessValue(i, time, out);
-                        addPoint(i, time + param_Delay, out * param_Scale + param_Offset);
-                    }
+                    out = lowPassFilters[i].getOutput(time, out);
+                    out = postProcessValue(i, time, out);
+                    addPoint(i, time + param_Delay, out * param_Scale + param_Offset);
                 }
             }
         }

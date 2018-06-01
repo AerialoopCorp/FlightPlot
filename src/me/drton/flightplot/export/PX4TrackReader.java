@@ -12,9 +12,9 @@ import java.util.Map;
  * Created by ada on 23.12.13.
  */
 public class PX4TrackReader extends AbstractTrackReader {
-    private static final String GPOS_LAT = "GPOS.Lat";
-    private static final String GPOS_LON = "GPOS.Lon";
-    private static final String GPOS_ALT = "GPOS.Alt";
+    private static final String GPOS_LAT = "GPS.Lat";
+    private static final String GPOS_LON = "GPS.Lon";
+    private static final String GPOS_ALT = "GPS.Alt";
     private static final String GPSP_LAT = "GPSP.Lat";
     private static final String GPSP_LON = "GPSP.Lon";
     private static final String GPSP_ALT = "GPSP.Alt";
