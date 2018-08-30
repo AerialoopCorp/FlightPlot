@@ -167,16 +167,7 @@ public class SensorHealth extends PlotProcessor {
 
                 if (isDifferent) {
                     boolean val = (temp & 1 << a) > 0;
-                    if (!init) {
-                        // only add non-default flags on the first change
-                        if (!val) {
-                            marker.append(String.format("%s: %b | ", sensor, val));
-                        }
-
-                    } else {
-                        // only mark changes
-                        marker.append(String.format("%s: %b | ", sensor, val));
-                    }
+                    marker.append(String.format("%s: %b | ", sensor, val));
                 }
             }
 
