@@ -45,8 +45,8 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(67108864l, "STORAGE");
         sensors.put(134217728l, "GYRO_CONSISTENT");
         sensors.put(268435456l, "ACCEL_CONSISTENT");
-        //sensors.put(536870912l, "undefined");
-        //sensors.put(1073741824l, "undefined");
+        sensors.put(536870912l, "MAG_CONSISTENT");
+        sensors.put(1073741824l, "AVIONICS_POWER");
         sensors.put(2147483648l, "SAFETY");
         states.put("HEAL.Sens", sensors);
 
@@ -79,6 +79,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(1024l, "x flow");
         sensors.put(2048l, "y flow");
         states.put("EST2.IC", sensors);
+        states.put("estimator_status_0.innovation_check_flags", sensors);
 
         sensors = new LinkedHashMap<Long, String>();
         sensors.put(1l, "CS_TILT_ALIGN");
@@ -104,6 +105,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(1048576l, "CS_GND_EFFECT");
         sensors.put(2097152l, "CS_RNG_STUCK");
         states.put("EST2.CTRL", sensors);
+        states.put("estimator_status_0.control_mode_flags", sensors);
 
         sensors = new LinkedHashMap<Long, String>();
         sensors.put(1l, "mag X-axis");
@@ -123,6 +125,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(16384l, "D pos");
         sensors.put(32768l, "d vel bias");
         states.put("EST0.fFault", sensors);
+        states.put("estimator_status_0.filter_fault_flags", sensors);
     };
 
     @Override
