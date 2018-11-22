@@ -1035,8 +1035,8 @@ public class FlightPlot {
         int returnVal = fc.showDialog(mainFrame, "Export");
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             String fileName = fc.getSelectedFile().toString();
-            if (parametersExtensionFilter == fc.getFileFilter() && !fileName.toLowerCase().endsWith(".txt")) {
-                fileName += ".txt";
+            if (parametersExtensionFilter == fc.getFileFilter() && !fileName.toLowerCase().endsWith(".params")) {
+                fileName += ".params";
             }
             try {
                 FileWriter fileWriter = new FileWriter(new File(fileName));
@@ -1052,7 +1052,7 @@ public class FlightPlot {
 
                     // Export parameter in QGC (old?) format
                     if (value instanceof Float) {
-                        fileWriter.write(String.format("1\t1\t%s\t%.15f\t9\n", param.getKey(), param.getValue()));
+                        fileWriter.write(String.format("1\t1\t%s\t%s\t9\n", param.getKey(), param.getValue().toString()));
                     } else {
                         fileWriter.write(String.format("1\t1\t%s\t%d\t6\n", param.getKey(), param.getValue()));
                     }
