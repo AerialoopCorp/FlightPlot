@@ -1,6 +1,7 @@
 package me.drton.flightplot.export;
 
 import me.drton.jmavlib.log.FormatErrorException;
+import me.drton.jmavlib.log.LogReader;
 
 import java.io.IOException;
 
@@ -16,4 +17,6 @@ public interface TrackReader {
      * @throws FormatErrorException
      */
     TrackPoint readNextPoint() throws IOException, FormatErrorException;
+
+    LogReader getLogReader();
 }

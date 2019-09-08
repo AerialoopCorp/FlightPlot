@@ -70,7 +70,7 @@ public class TrackExportDialog extends JDialog {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonExport);
-        setTitle("Export settings");
+        setTitle("Track Export Settings");
         initExportersList(exporters);
         initSampleSlider();
         buttonExport.addActionListener(new ActionListener() {

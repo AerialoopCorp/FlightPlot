@@ -11,7 +11,7 @@ import java.util.Map;
  * Created by ada on 23.12.13.
  */
 public abstract class AbstractTrackReader implements TrackReader {
-    protected final LogReader reader;
+    public final LogReader reader;
     private long timeNext = 0;
     protected final TrackReaderConfiguration config;
 
@@ -36,5 +36,10 @@ public abstract class AbstractTrackReader implements TrackReader {
                 return t;
             }
         }
+    }
+
+    @Override
+    public LogReader getLogReader() {
+        return reader;
     }
 }

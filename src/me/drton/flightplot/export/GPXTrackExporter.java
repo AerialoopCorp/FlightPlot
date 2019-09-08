@@ -58,4 +58,8 @@ public class GPXTrackExporter extends AbstractTrackExporter {
     public String getFileExtension() {
         return "gpx";
     }
+
+    protected void writeSinglePoint(TrackPoint point, String name) throws IOException {
+
+    }
 }

@@ -27,6 +27,8 @@ public class KMLTrackExporter extends AbstractTrackExporter {
             return LINE_STYLE_RED;
         } else if ("STABILIZED".equals(flightMode)) {
             return LINE_STYLE_RED;
+        } else if ("ACRO".equals(flightMode)) {
+            return LINE_STYLE_RED;
         } else if ("ALTCTL".equals(flightMode)) {
             return LINE_STYLE_YELLOW;
         } else if ("POSCTL".equals(flightMode)) {
@@ -37,12 +39,14 @@ public class KMLTrackExporter extends AbstractTrackExporter {
             return LINE_STYLE_CYAN;
         } else if ("AUTO_RTL".equals(flightMode)) {
             return LINE_STYLE_MAGENTA;
-        } else if ("AUTO_ACRO".equals(flightMode)) {
-            return LINE_STYLE_RED;
+        } else if ("AUTO_LAND".equals(flightMode)) {
+            return LINE_STYLE_BLUE;
+        } else if ("AUTO_TAKEOFF".equals(flightMode)) {
+            return LINE_STYLE_BLUE;
         } else if ("AUTO_OFFBOARD".equals(flightMode)) {
             return LINE_STYLE_BLUE;
         } else {
-            return LINE_STYLE_YELLOW;
+            return LINE_STYLE_RED;
         }
     }
 
@@ -62,6 +66,30 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("<Style id=\"" + LINE_STYLE_BLUE + "\">\n");
         writer.write("<LineStyle>\n");
         writer.write("<color>7fff0000</color>\n");
+        writer.write("<width>4</width>\n");
+        writer.write("</LineStyle>\n");
+        writer.write("</Style>\n");
+        writer.write("<Style id=\"" + LINE_STYLE_YELLOW + "\">\n");
+        writer.write("<LineStyle>\n");
+        writer.write("<color>7fffff00</color>\n");
+        writer.write("<width>4</width>\n");
+        writer.write("</LineStyle>\n");
+        writer.write("</Style>\n");
+        writer.write("<Style id=\"" + LINE_STYLE_GREEN + "\">\n");
+        writer.write("<LineStyle>\n");
+        writer.write("<color>7f00ff00</color>\n");
+        writer.write("<width>4</width>\n");
+        writer.write("</LineStyle>\n");
+        writer.write("</Style>\n");
+        writer.write("<Style id=\"" + LINE_STYLE_CYAN + "\">\n");
+        writer.write("<LineStyle>\n");
+        writer.write("<color>7f00ffff</color>\n");
+        writer.write("<width>4</width>\n");
+        writer.write("</LineStyle>\n");
+        writer.write("</Style>\n");
+        writer.write("<Style id=\"" + LINE_STYLE_MAGENTA + "\">\n");
+        writer.write("<LineStyle>\n");
+        writer.write("<color>7fff00ff</color>\n");
         writer.write("<width>4</width>\n");
         writer.write("</LineStyle>\n");
         writer.write("</Style>\n");
@@ -214,6 +242,22 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         }
 
         writer.write("</gx:Track>\n");
+        writer.write("</Placemark>\n");
+    }
+
+    protected void writeSinglePoint(TrackPoint point, String name) throws IOException {
+        if (Math.abs(point.lon) < 0.0001 && Math.abs(point.lat) < 0.0001) {
+            return;
+        }
+
+        writer.write("<Placemark>\n");
+        writer.write("<name>" + name + "</name>\n");
+        writer.write("<description></description>\n");
+        writer.write("<styleUrl>#setpoint</styleUrl>\n");
+        writer.write("<Point>\n");
+        writer.write("<altitudeMode>absolute</altitudeMode>\n");
+        writer.write(String.format(Locale.ROOT, "<coordinates>%.10f %.10f %.2f</coordinates>\n", point.lon, point.lat, point.alt));
+        writer.write("</Point>\n");
         writer.write("</Placemark>\n");
     }
 }

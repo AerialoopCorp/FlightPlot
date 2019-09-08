@@ -108,11 +108,17 @@ public class PX4TrackReader extends AbstractTrackReader {
                 case 5:
                     return "AUTO_RTL";
                 case 6:
-                    return "AUTO_ACRO";
+                    return "ACRO";
                 case 7:
                     return "AUTO_OFFBOARD";
                 case 8:
                     return "STABILIZED";
+                case 9:
+                    return "RATTITUDE";
+                case 10:
+                    return "AUTO_TAKEOFF";
+                case 11:
+                    return "AUTO_LAND";
                 default:
                     return String.format("UNKNOWN(%s)", flightMode.intValue());
             }
