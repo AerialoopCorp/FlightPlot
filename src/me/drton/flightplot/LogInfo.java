@@ -49,12 +49,17 @@ public class LogInfo {
             infoTableModel.addRow(new Object[]{
                     "Length, s", String.format(Locale.ROOT, "%.3f", logReader.getSizeMicroseconds() * 1e-6)});
             String startTimeStr = "";
+            String endTimeStr = "";
             if (logReader.getUTCTimeReferenceMicroseconds() > 0) {
                 startTimeStr = dateFormat.format(
                         new Date((logReader.getStartMicroseconds() + logReader.getUTCTimeReferenceMicroseconds()) / 1000)) + " UTC";
+                endTimeStr = dateFormat.format(
+                        new Date((logReader.getStartMicroseconds() + logReader.getSizeMicroseconds() + logReader.getUTCTimeReferenceMicroseconds()) / 1000)) + " UTC";
             }
             infoTableModel.addRow(new Object[]{
                     "Start Time", startTimeStr});
+            infoTableModel.addRow(new Object[]{
+                    "End Time", endTimeStr});
             infoTableModel.addRow(new Object[]{"Updates count", logReader.getSizeUpdates()});
             infoTableModel.addRow(new Object[]{"Errors", logReader.getErrors().size()});
             Map<String, Object> ver = logReader.getVersion();
