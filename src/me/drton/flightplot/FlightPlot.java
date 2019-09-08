@@ -1,9 +1,6 @@
 package me.drton.flightplot;
 
-import me.drton.flightplot.export.GPXTrackExporter;
-import me.drton.flightplot.export.KMLTrackExporter;
-import me.drton.flightplot.export.TrackExportDialog;
-import me.drton.flightplot.export.TrackExporter;
+import me.drton.flightplot.export.*;
 import me.drton.flightplot.processors.PlotProcessor;
 import me.drton.flightplot.processors.ProcessorsList;
 import me.drton.flightplot.processors.Simple;
@@ -120,6 +117,7 @@ public class FlightPlot {
     private AtomicBoolean invokeProcessFile = new AtomicBoolean(false);
     private TrackExportDialog trackExportDialog;
     private PlotExportDialog plotExportDialog;
+    private CamExportDialog camExportDialog;
     private NumberAxis domainAxisSeconds;
     private DateAxis domainAxisDate;
     private int timeMode = 0;
@@ -140,6 +138,7 @@ public class FlightPlot {
         }
         trackExportDialog = new TrackExportDialog(exporters);
         plotExportDialog = new PlotExportDialog(this);
+        camExportDialog = new CamExportDialog();
 
         preferences = Preferences.userRoot().node(appName);
         mainFrame = new JFrame(appNameAndVersion);
@@ -498,6 +497,7 @@ public class FlightPlot {
         markerCheckBox.setSelected(preferences.getBoolean("ShowMarkers", false));
         trackExportDialog.loadPreferences(preferences);
         plotExportDialog.loadPreferences(preferences);
+        camExportDialog.loadPreferences(preferences);
     }
 
     private void loadPresetsList() {
@@ -561,6 +561,7 @@ public class FlightPlot {
             preferences.putBoolean("ShowMarkers", markerCheckBox.isSelected());
             trackExportDialog.savePreferences(preferences);
             plotExportDialog.savePreferences(preferences);
+            camExportDialog.savePreferences(preferences);
             preferences.sync();
         } catch (BackingStoreException e) {
             e.printStackTrace();
@@ -763,6 +764,15 @@ public class FlightPlot {
             }
         });
         fileMenu.add(exportParametersItem);
+
+        JMenuItem exportCam = new JMenuItem("Export Image Tags...");
+        exportCam.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showCamExportDialog();
+            }
+        });
+        fileMenu.add(exportCam);
 
         if (!OSValidator.isMac()) {
             fileMenu.add(new JPopupMenu.Separator());
@@ -1015,6 +1025,21 @@ public class FlightPlot {
         } catch (Exception e) {
             e.printStackTrace();
             showExportTrackStatusMessage("Track could not be exported.");
+        }
+    }
+
+    public void showCamExportDialog() {
+        if (logReader == null) {
+            JOptionPane.showMessageDialog(mainFrame, "Log file must be opened first.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            camExportDialog.display(logReader, getLogRange(timeMode));
+        } catch (Exception e) {
+            e.printStackTrace();
+            showExportTrackStatusMessage("Tags could not be exported.");
         }
     }
 
