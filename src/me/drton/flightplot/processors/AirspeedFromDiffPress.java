@@ -12,6 +12,7 @@ import java.util.Map;
 public class AirspeedFromDiffPress extends PlotProcessor {
     private String param_diff_press;
     private String param_baro_press;
+    private String param_baro_press_pa;
     private String param_temp;
     private double param_dp_offset;
     private double param_dp_scale;
@@ -24,7 +25,8 @@ public class AirspeedFromDiffPress extends PlotProcessor {
         params.put("Diff Press", "DPRS.DPRES");
         params.put("DP Offset", 0.0);
         params.put("DP Scale", 2.0);
-        params.put("Baro Press", "SENS.BaroPres");
+        params.put("Baro Press mbar", "SENS.BaroPres");
+        params.put("Baro Press pa", "ADA.pres");
         params.put("Temp", "DPRS.Temp");
         return params;
     }
@@ -34,7 +36,8 @@ public class AirspeedFromDiffPress extends PlotProcessor {
         param_diff_press = ((String) parameters.get("Diff Press"));
         param_dp_offset = (Double) parameters.get("DP Offset");
         param_dp_scale = (Double) parameters.get("DP Scale");
-        param_baro_press = ((String) parameters.get("Baro Press"));
+        param_baro_press = ((String) parameters.get("Baro Press mbar"));
+        param_baro_press_pa = ((String) parameters.get("Baro Press pa"));
         param_temp = ((String) parameters.get("Temp"));
         addSeries("IAS");
         addSeries("TAS");
@@ -53,6 +56,11 @@ public class AirspeedFromDiffPress extends PlotProcessor {
         v = (Number) update.get(param_baro_press);
         if (v != null) {
             baro_press = v.doubleValue() * 1e2;
+        }
+
+        v = (Number) update.get(param_baro_press_pa);
+        if (v != null) {
+            baro_press = v.doubleValue();
         }
 
         v = (Number) update.get(param_temp);

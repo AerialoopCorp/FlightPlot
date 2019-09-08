@@ -38,6 +38,7 @@ public class ProcessorsList {
         addProcessorClass(AirspeedFromDiffPress.class);
         addProcessorClass(SensorHealth.class);
         addProcessorClass(DistanceToWaypoint.class);
+        addProcessorClass(DistanceToSetpoint.class);
     }
 
     private void addProcessorClass(Class<? extends PlotProcessor> processorClass) {
