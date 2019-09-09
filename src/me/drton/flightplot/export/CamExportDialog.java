@@ -4,6 +4,20 @@ import me.drton.flightplot.PreferencesUtil;
 import me.drton.jmavlib.conversion.RotationConversion;
 import me.drton.jmavlib.log.FormatErrorException;
 import me.drton.jmavlib.log.LogReader;
+import org.apache.commons.imaging.ImageReadException;
+import org.apache.commons.imaging.ImageWriteException;
+import org.apache.commons.imaging.Imaging;
+import org.apache.commons.imaging.common.ImageMetadata;
+import org.apache.commons.imaging.common.RationalNumber;
+import org.apache.commons.imaging.formats.jpeg.JpegImageMetadata;
+import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
+import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
+import org.apache.commons.imaging.formats.tiff.constants.GpsTagConstants;
+import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
+import org.apache.commons.imaging.formats.tiff.taginfos.TagInfoByte;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 import org.jfree.data.Range;
 
 import javax.swing.*;
@@ -183,12 +197,16 @@ public class CamExportDialog extends JDialog {
     private void export() {
         updateConfiguration();
 
+        setStatus("Exporting...", false);
+
         try {
         final File file = getDestinationFile("csv", "CVS");
             if (null != file) {
                 int count = 0;
                 int missing = 0;
+                int imagesMissing = 0;
                 int last_seq = -1;
+
                 BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
                 writer.write("imagename,latitude,longitude,altitude,pitch,roll,yaw");
@@ -219,7 +237,7 @@ public class CamExportDialog extends JDialog {
                                 missing++;
 
                                 writer.write(String.format(imageNameFormat.getText(), i));
-                                writer.write(",,,,,,");
+                                writer.write(",,,,,,,tag missing");
                                 writer.newLine();
                             }
                         }
@@ -244,22 +262,83 @@ public class CamExportDialog extends JDialog {
 
                         double[] euler = RotationConversion.eulerAnglesByRotationMatrix(rot_q);
 
-                        writer.write(String.format(imageNameFormat.getText(), seq));
+                        String imageName = String.format(imageNameFormat.getText(), seq.intValue() + 1);
+                        writer.write(imageName);
                         writer.write(",");
                         writer.write(String.format("%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", lat.doubleValue(), lon.doubleValue(), alt.doubleValue(), euler[1], euler[0], euler[2]));
+
+                        try {
+                            updateImageMetaData(new File(file.getParentFile().getAbsolutePath() + File.separator + imageName),
+                                    new File(file.getParentFile().getAbsolutePath() + File.separator + imageName + ".jpg"),
+                                    lat.doubleValue(), lon.doubleValue(), alt.doubleValue());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            imagesMissing++;
+                            writer.write(",image missing");
+                        }
+
                         writer.newLine();
                     }
                 }
 
                 writer.close();
 
-                setStatus(String.format("Exported %d tags, missing %d", count, missing), false);
+                setStatus(String.format("Exported %d tags, missing tags %d, images not found %d", count, missing, imagesMissing), false);
             }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (FormatErrorException e) {
             e.printStackTrace();
         }
+    }
+
+    private void updateImageMetaData(File jpegImageFile, File dst, double lat, double lon, double alt) throws IOException, ImageReadException, ImageWriteException {
+        TiffOutputSet outputSet = null;
+
+        // note that metadata might be null if no metadata is found.
+        final ImageMetadata metadata = Imaging.getMetadata(jpegImageFile);
+        final JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
+        if (null != jpegMetadata) {
+            // note that exif might be null if no Exif metadata is found.
+            final TiffImageMetadata exif = jpegMetadata.getExif();
+
+            if (null != exif) {
+                // TiffImageMetadata class is immutable (read-only).
+                // TiffOutputSet class represents the Exif data to write.
+                //
+                // Usually, we want to update existing Exif metadata by
+                // changing
+                // the values of a few fields, or adding a field.
+                // In these cases, it is easiest to use getOutputSet() to
+                // start with a "copy" of the fields read from the image.
+                outputSet = exif.getOutputSet();
+            }
+        }
+
+        // if file does not contain any exif metadata, we create an empty
+        // set of exif metadata. Otherwise, we keep all of the other
+        // existing tags.
+        if (null == outputSet) {
+            outputSet = new TiffOutputSet();
+        }
+
+        outputSet.setGPSInDegrees(lon, lat);
+        outputSet.getGPSDirectory().removeField(GpsTagConstants.GPS_TAG_GPS_ALTITUDE);
+        outputSet.getGPSDirectory().add(GpsTagConstants.GPS_TAG_GPS_ALTITUDE, RationalNumber.valueOf(alt));
+        outputSet.getGPSDirectory().removeField(GpsTagConstants.GPS_TAG_GPS_ALTITUDE_REF);
+        outputSet.getGPSDirectory().add(GpsTagConstants.GPS_TAG_GPS_ALTITUDE_REF,
+                (byte)GpsTagConstants.GPS_TAG_GPS_ALTITUDE_REF_VALUE_ABOVE_SEA_LEVEL);
+
+        final TiffOutputDirectory exifDirectory = outputSet.getOrCreateRootDirectory();
+        exifDirectory.removeField(ExifTagConstants.EXIF_TAG_SOFTWARE);
+        exifDirectory.add(ExifTagConstants.EXIF_TAG_SOFTWARE, "FlightPlot");
+
+
+        OutputStream os = new FileOutputStream(dst);
+        os = new BufferedOutputStream(os);
+
+        new ExifRewriter().updateExifMetadataLossless(jpegImageFile, os,
+                outputSet);
     }
 
     private void setStatus(String status, boolean error) {

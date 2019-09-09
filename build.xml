@@ -44,6 +44,7 @@
             <zipgroupfileset dir="lib" includes="jcommon-*.jar"/>
             <zipgroupfileset dir="lib" includes="forms_rt.jar"/>
             <zipgroupfileset dir="lib" includes="vecmath.jar"/>
+            <zipgroupfileset dir="lib" includes="commons-*.jar"/>
         </jar>
     </target>
 
