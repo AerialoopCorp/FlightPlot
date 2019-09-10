@@ -53,6 +53,7 @@ public class CamExportDialog extends JDialog {
     private JTextField imageNameFormat;
     private JProgressBar exportProgress;
     private JButton buttonCancel;
+    private JTextField imageStartNumber;
     private File lastExportDirectory;
 
     private TrackExporterConfiguration exporterConfiguration = new TrackExporterConfiguration();
@@ -219,6 +220,12 @@ public class CamExportDialog extends JDialog {
                 try {
                     List<TrackPoint> tags = new ArrayList<TrackPoint>();
 
+                    int imageNumberStart = 1;
+                    try {
+                        imageNumberStart = Integer.valueOf(imageStartNumber.getText());
+                    } catch (NumberFormatException e) {
+                    }
+
                     if (null != file) {
                         int missing = 0;
                         int imagesMissing = 0;
@@ -291,14 +298,17 @@ public class CamExportDialog extends JDialog {
                                 for (int i = last_seq + 1; i < tag.sequence; i++) {
                                     missing++;
 
-                                    writer.write(String.format(imageNameFormat.getText(), i));
+                                    String imageName = String.format(imageNameFormat.getText(), i - tags.get(0).sequence + imageNumberStart);
+                                    writer.write(imageName);
                                     writer.write(",,,,,,,tag missing");
                                     writer.newLine();
                                 }
                             }
                             last_seq = tag.sequence;
 
-                            String imageName = String.format(imageNameFormat.getText(), tag.sequence + 1);
+                            // We have to subtract the initial sequence number for the image name since the sequence can start anywhere
+                            String imageName = String.format(imageNameFormat.getText(), tag.sequence - tags.get(0).sequence + imageNumberStart);
+
                             writer.write(imageName);
                             writer.write(",");
                             writer.write(String.format("%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", tag.lat, tag.lon, tag.alt, tag.radPitch, tag.radRoll, tag.heading));
