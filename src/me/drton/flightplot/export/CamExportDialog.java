@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 public class CamExportDialog extends JDialog {
@@ -50,12 +51,15 @@ public class CamExportDialog extends JDialog {
     private JCheckBox exportDataInChartCheckBox;
     private JLabel statusLabel;
     private JTextField imageNameFormat;
+    private JProgressBar exportProgress;
+    private JButton buttonCancel;
     private File lastExportDirectory;
 
     private TrackExporterConfiguration exporterConfiguration = new TrackExporterConfiguration();
     private TrackReaderConfiguration readerConfiguration = new TrackReaderConfiguration();
     private LogReader logReader;
     private Range chartRange;
+    private boolean stopExport;
 
     private class ExportFormatItem {
         String description;
@@ -85,6 +89,12 @@ public class CamExportDialog extends JDialog {
         buttonClose.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onClose();
+            }
+        });
+        buttonCancel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                stopExport = true;
             }
         });
         // call onClose() when cross is clicked
@@ -197,102 +207,140 @@ public class CamExportDialog extends JDialog {
     private void export() {
         updateConfiguration();
 
-        setStatus("Exporting...", false);
-
-        try {
         final File file = getDestinationFile("csv", "CVS");
-            if (null != file) {
-                int count = 0;
-                int missing = 0;
-                int imagesMissing = 0;
-                int last_seq = -1;
 
-                BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+        setStatus("Counting tags...", false);
+        stopExport = false;
+        buttonCancel.setEnabled(true);
+        exportProgress.setValue(0);
 
-                writer.write("imagename,latitude,longitude,altitude,pitch,roll,yaw");
-                writer.newLine();
+        new Thread() {
+            public void run() {
+                try {
+                    List<TrackPoint> tags = new ArrayList<TrackPoint>();
 
-                logReader.seek(readerConfiguration.getTimeStart());
-                Map<String, Object> data = new HashMap<String, Object>();
-                while (true) {
-                    data.clear();
-                    long t;
-                    try {
-                        t = logReader.readUpdate(data);
-                    } catch (EOFException e) {
-                        break;  // End of file
-                    }
+                    if (null != file) {
+                        int missing = 0;
+                        int imagesMissing = 0;
+                        int last_seq = -1;
 
-                    if (t > readerConfiguration.getTimeEnd()) {
-                        break;
-                    }
+                        BufferedWriter writer = new BufferedWriter(new FileWriter(file));
 
-                    Number seq = (Number) data.get("CAMT.seq");
+                        writer.write("imagename,latitude,longitude,altitude,pitch,roll,yaw");
+                        writer.newLine();
 
-                    if (null != seq) {
-                        count++;
+                        logReader.seek(readerConfiguration.getTimeStart());
+                        Map<String, Object> data = new HashMap<String, Object>();
+                        while (true) {
+                            data.clear();
+                            long t;
+                            try {
+                                t = logReader.readUpdate(data);
+                            } catch (EOFException e) {
+                                break;  // End of file
+                            }
 
-                        if (last_seq >= 0 && last_seq + 1 != seq.intValue()) {
-                            for (int i = last_seq + 1; i < seq.intValue(); i++) {
-                                missing++;
+                            if (t > readerConfiguration.getTimeEnd()) {
+                                break;
+                            }
 
-                                writer.write(String.format(imageNameFormat.getText(), i));
-                                writer.write(",,,,,,,tag missing");
-                                writer.newLine();
+                            Number seq = (Number) data.get("CAMT.seq");
+
+                            if (null != seq) {
+                                Number lat = (Number) data.get("CAMT.lat");
+                                Number lon = (Number) data.get("CAMT.lon");
+                                Number alt = (Number) data.get("CAMT.alt");
+
+                                Number qw = (Number) data.get("CAMT.qw");
+                                Number qx = (Number) data.get("CAMT.qy");
+                                Number qy = (Number) data.get("CAMT.qx");
+                                Number qz = (Number) data.get("CAMT.qz");
+
+                                // Rotate with pitch if set
+                                double[] q = {qw.doubleValue(), qx.doubleValue(), qy.doubleValue(), qz.doubleValue()};
+                                Matrix3d rot_q = new Matrix3d();
+                                //Matrix3d rot_target = new Matrix3d();
+                                rot_q.set((RotationConversion.rotationMatrixByQuaternion(q)));
+                                //rot_target.set(RotationConversion.rotationMatrixByEulerAngles(0, Math.toRadians(param_pitch_rotation), 0));
+                                //rot_q.mul(rot_target);
+
+                                double[] euler = RotationConversion.eulerAnglesByRotationMatrix(rot_q);
+
+                                TrackPoint tag = new TrackPoint(lat.doubleValue(), lon.doubleValue(), alt.doubleValue(), t);
+                                tag.sequence = seq.intValue();
+                                tag.radRoll = euler[0];
+                                tag.radPitch = euler[1];
+                                tag.heading = euler[2];
+
+                                tags.add(tag);
+
+                                if (stopExport) {
+                                    writer.close();
+                                    throw new InterruptedException();
+                                }
                             }
                         }
-                        last_seq = seq.intValue();
 
-                        Number lat = (Number) data.get("CAMT.lat");
-                        Number lon = (Number) data.get("CAMT.lon");
-                        Number alt = (Number) data.get("CAMT.alt");
+                        setStatus(String.format("Exporting %d tags...", tags.size()), false);
+                        exportProgress.setMaximum(tags.size());
 
-                        Number qw = (Number) data.get("CAMT.qw");
-                        Number qx = (Number) data.get("CAMT.qy");
-                        Number qy = (Number) data.get("CAMT.qx");
-                        Number qz = (Number) data.get("CAMT.qz");
+                        for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++) {
+                            TrackPoint tag = tags.get(tagIndex);
 
-                        // Rotate with pitch if set
-                        double[] q = {qw.doubleValue(), qx.doubleValue(), qy.doubleValue(), qz.doubleValue()};
-                        Matrix3d rot_q = new Matrix3d();
-                        //Matrix3d rot_target = new Matrix3d();
-                        rot_q.set((RotationConversion.rotationMatrixByQuaternion(q)));
-                        //rot_target.set(RotationConversion.rotationMatrixByEulerAngles(0, Math.toRadians(param_pitch_rotation), 0));
-                        //rot_q.mul(rot_target);
+                            if (last_seq >= 0 && last_seq + 1 != tag.sequence) {
+                                for (int i = last_seq + 1; i < tag.sequence; i++) {
+                                    missing++;
 
-                        double[] euler = RotationConversion.eulerAnglesByRotationMatrix(rot_q);
+                                    writer.write(String.format(imageNameFormat.getText(), i));
+                                    writer.write(",,,,,,,tag missing");
+                                    writer.newLine();
+                                }
+                            }
+                            last_seq = tag.sequence;
 
-                        String imageName = String.format(imageNameFormat.getText(), seq.intValue() + 1);
-                        writer.write(imageName);
-                        writer.write(",");
-                        writer.write(String.format("%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", lat.doubleValue(), lon.doubleValue(), alt.doubleValue(), euler[1], euler[0], euler[2]));
+                            String imageName = String.format(imageNameFormat.getText(), tag.sequence + 1);
+                            writer.write(imageName);
+                            writer.write(",");
+                            writer.write(String.format("%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", tag.lat, tag.lon, tag.alt, tag.radPitch, tag.radRoll, tag.heading));
 
-                        try {
-                            updateImageMetaData(new File(file.getParentFile().getAbsolutePath() + File.separator + imageName),
-                                    new File(file.getParentFile().getAbsolutePath() + File.separator + imageName + ".jpg"),
-                                    lat.doubleValue(), lon.doubleValue(), alt.doubleValue());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            imagesMissing++;
-                            writer.write(",image missing");
+                            try {
+                                updateImageMetaData(new File(file.getParentFile().getAbsolutePath() + File.separator + imageName),
+                                        new File(file.getParentFile().getAbsolutePath() + File.separator + imageName + "_tagged.jpg"),
+                                        tag);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                imagesMissing++;
+                                writer.write(",image missing");
+                            }
+
+                            writer.newLine();
+
+                            exportProgress.setValue(tagIndex + 1);
+
+                            if (stopExport) {
+                                writer.close();
+                                throw new InterruptedException();
+                            }
                         }
 
-                        writer.newLine();
+                        writer.close();
+
+                        setStatus(String.format("Exported %d tags, missing tags %d, images not updated %d", tags.size(), missing, imagesMissing), false);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (FormatErrorException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    setStatus("Exported canceled", false);
                 }
 
-                writer.close();
-
-                setStatus(String.format("Exported %d tags, missing tags %d, images not found %d", count, missing, imagesMissing), false);
+                buttonCancel.setEnabled(false);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (FormatErrorException e) {
-            e.printStackTrace();
-        }
+        }.start();
     }
 
-    private void updateImageMetaData(File jpegImageFile, File dst, double lat, double lon, double alt) throws IOException, ImageReadException, ImageWriteException {
+    private void updateImageMetaData(File jpegImageFile, File dst, TrackPoint tag) throws IOException, ImageReadException, ImageWriteException {
         TiffOutputSet outputSet = null;
 
         // note that metadata might be null if no metadata is found.
@@ -322,9 +370,9 @@ public class CamExportDialog extends JDialog {
             outputSet = new TiffOutputSet();
         }
 
-        outputSet.setGPSInDegrees(lon, lat);
+        outputSet.setGPSInDegrees(tag.lon, tag.lat);
         outputSet.getGPSDirectory().removeField(GpsTagConstants.GPS_TAG_GPS_ALTITUDE);
-        outputSet.getGPSDirectory().add(GpsTagConstants.GPS_TAG_GPS_ALTITUDE, RationalNumber.valueOf(alt));
+        outputSet.getGPSDirectory().add(GpsTagConstants.GPS_TAG_GPS_ALTITUDE, RationalNumber.valueOf(tag.alt));
         outputSet.getGPSDirectory().removeField(GpsTagConstants.GPS_TAG_GPS_ALTITUDE_REF);
         outputSet.getGPSDirectory().add(GpsTagConstants.GPS_TAG_GPS_ALTITUDE_REF,
                 (byte)GpsTagConstants.GPS_TAG_GPS_ALTITUDE_REF_VALUE_ABOVE_SEA_LEVEL);

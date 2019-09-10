@@ -14,6 +14,7 @@ public class TrackPoint {
     public double radRoll;
     public double radPitch;
     public double heading;
+    public int sequence;
 
     public TrackPoint(double lat, double lon, double alt, long time, String flightMode) {
         this.lat = lat;
