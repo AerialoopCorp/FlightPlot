@@ -30,15 +30,19 @@ import javax.vecmath.Matrix3d;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
 public class CamExportDialog extends JDialog {
     private static final String DIALOG_SETTING = "TrackExportDialog";
-    private static final String EXPORTER_CONFIGURATION_SETTING = "ExporterConfiguration";
+    private static final String EXPORTER_CONFIGURATION_SETTING = "CamExporterConfiguration";
     private static final String READER_CONFIGURATION_SETTING = "ReaderConfiguration";
-    private static final String LAST_EXPORT_DIRECTORY_SETTING = "LastExportDirectory";
+    private static final String LAST_EXPORT_DIRECTORY_SETTING = "CamLastExportDirectory";
 
     private JPanel contentPane;
     private JButton buttonExport;
@@ -56,7 +60,7 @@ public class CamExportDialog extends JDialog {
     private JTextField imageStartNumber;
     private File lastExportDirectory;
 
-    private TrackExporterConfiguration exporterConfiguration = new TrackExporterConfiguration();
+    private CamExporterConfiguration exporterConfiguration = new CamExporterConfiguration();
     private TrackReaderConfiguration readerConfiguration = new TrackReaderConfiguration();
     private LogReader logReader;
     private Range chartRange;
@@ -226,12 +230,16 @@ public class CamExportDialog extends JDialog {
                     } catch (NumberFormatException e) {
                     }
 
+                    long imageStartTime = 0;
+                    long tagStartTime = 0;
+
                     if (null != file) {
                         int missing = 0;
                         int imagesMissing = 0;
                         int last_seq = -1;
 
                         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+                        BufferedWriter logWriter = new BufferedWriter((new FileWriter(new File(file.getAbsolutePath() + ".log"))));
 
                         writer.write("imagename,latitude,longitude,altitude,pitch,roll,yaw");
                         writer.newLine();
@@ -294,6 +302,10 @@ public class CamExportDialog extends JDialog {
                         for (int tagIndex = 0; tagIndex < tags.size(); tagIndex++) {
                             TrackPoint tag = tags.get(tagIndex);
 
+                            if (tagStartTime == 0) {
+                                tagStartTime = tag.time;
+                            }
+
                             if (last_seq >= 0 && last_seq + 1 != tag.sequence) {
                                 for (int i = last_seq + 1; i < tag.sequence; i++) {
                                     missing++;
@@ -304,6 +316,7 @@ public class CamExportDialog extends JDialog {
                                     writer.newLine();
                                 }
                             }
+
                             last_seq = tag.sequence;
 
                             // We have to subtract the initial sequence number for the image name since the sequence can start anywhere
@@ -311,29 +324,58 @@ public class CamExportDialog extends JDialog {
 
                             writer.write(imageName);
                             writer.write(",");
-                            writer.write(String.format("%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", tag.lat, tag.lon, tag.alt, tag.radPitch, tag.radRoll, tag.heading));
+                            writer.write(String.format(Locale.ENGLISH,"%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", tag.lat, tag.lon, tag.alt, tag.radPitch, tag.radRoll, tag.heading));
 
                             try {
-                                updateImageMetaData(new File(file.getParentFile().getAbsolutePath() + File.separator + imageName),
-                                        new File(file.getParentFile().getAbsolutePath() + File.separator + imageName + "_tagged.jpg"),
-                                        tag);
+                                File sourceFile = new File(file.getParentFile().getAbsolutePath() + File.separator + imageName);
+
+                                if (sourceFile.exists()) {
+                                    BasicFileAttributes attr = Files.readAttributes(sourceFile.toPath(), BasicFileAttributes.class);
+                                    FileTime ft = attr.creationTime();
+                                    long imageTime = ft.to(TimeUnit.MICROSECONDS);
+
+                                    if (imageStartTime == 0) {
+                                        imageStartTime = imageTime;
+                                    }
+
+                                    long diff = (imageTime - imageStartTime) - (tag.time - tagStartTime);
+
+                                    logWriter.write(String.format("tag %d, image %s, time diff: %.2fs", tag.sequence, imageName, (double)diff / 1e6));
+
+                                    if (Math.abs((double)diff / 1e6) > 10.0) {
+                                        logWriter.write(", LARGE DIFF");
+                                    }
+
+                                    updateImageMetaData(sourceFile,
+                                            new File(file.getParentFile().getAbsolutePath() + File.separator + imageName + "_tagged.jpg"),
+                                            tag);
+
+                                } else {
+                                    writer.write(",image missing");
+                                    logWriter.write("Missing image " + imageName);
+                                    imagesMissing++;
+                                }
+
                             } catch (Exception e) {
                                 e.printStackTrace();
                                 imagesMissing++;
-                                writer.write(",image missing");
+                                writer.write(",image error");
                             }
 
                             writer.newLine();
+                            logWriter.newLine();
 
                             exportProgress.setValue(tagIndex + 1);
 
                             if (stopExport) {
                                 writer.close();
+                                logWriter.close();
                                 throw new InterruptedException();
                             }
                         }
 
                         writer.close();
+                        logWriter.close();
 
                         setStatus(String.format("Exported %d tags, missing tags %d, images not updated %d", tags.size(), missing, imagesMissing), false);
                     }
@@ -395,7 +437,7 @@ public class CamExportDialog extends JDialog {
         OutputStream os = new FileOutputStream(dst);
         os = new BufferedOutputStream(os);
 
-        new ExifRewriter().updateExifMetadataLossless(jpegImageFile, os,
+        new ExifRewriter().updateExifMetadataLossy(jpegImageFile, os,
                 outputSet);
     }
 
@@ -458,6 +500,9 @@ public class CamExportDialog extends JDialog {
     private boolean updateConfiguration() {
         String errorMsg = null;
 
+        exporterConfiguration.setImageName(imageNameFormat.getText());
+        exporterConfiguration.setStartingNumber(Long.valueOf(imageStartNumber.getText()));
+
         if (exportDataInChartCheckBox.isSelected()) {
             readerConfiguration.setTimeStart((long) (chartRange.getLowerBound() * 1000000));
             readerConfiguration.setTimeEnd((long) (chartRange.getUpperBound() * 1000000));
@@ -483,6 +528,9 @@ public class CamExportDialog extends JDialog {
         timeEndField.setText(stringFromMicroseconds(readerConfiguration.getTimeEnd() - logReader.getStartMicroseconds()));
         logEndTimeValue.setText(String.format(" (log end: %s)", stringFromMicroseconds(logReader.getSizeMicroseconds())));
         validateTimeRange(null);
+
+        imageStartNumber.setText(String.valueOf(exporterConfiguration.getStartingNumber()));
+        imageNameFormat.setText(exporterConfiguration.getImageName());
     }
 
     private void onClose() {
