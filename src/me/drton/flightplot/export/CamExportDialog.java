@@ -14,9 +14,11 @@ import org.apache.commons.imaging.formats.jpeg.exif.ExifRewriter;
 import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 import org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants;
 import org.apache.commons.imaging.formats.tiff.constants.GpsTagConstants;
+import org.apache.commons.imaging.formats.tiff.fieldtypes.FieldTypeAscii;
 import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
 import org.apache.commons.imaging.formats.tiff.taginfos.TagInfoByte;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputDirectory;
+import org.apache.commons.imaging.formats.tiff.write.TiffOutputField;
 import org.apache.commons.imaging.formats.tiff.write.TiffOutputSet;
 import org.jfree.data.Range;
 
@@ -33,6 +35,9 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -237,6 +242,9 @@ public class CamExportDialog extends JDialog {
                         int missing = 0;
                         int imagesMissing = 0;
                         int last_seq = -1;
+                        double currentAverage = 0;
+                        long prevDiff = 0;
+                        double variance = 0;
 
                         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
                         BufferedWriter logWriter = new BufferedWriter((new FileWriter(new File(file.getAbsolutePath() + ".log"))));
@@ -330,20 +338,61 @@ public class CamExportDialog extends JDialog {
                                 File sourceFile = new File(file.getParentFile().getAbsolutePath() + File.separator + imageName);
 
                                 if (sourceFile.exists()) {
-                                    BasicFileAttributes attr = Files.readAttributes(sourceFile.toPath(), BasicFileAttributes.class);
-                                    FileTime ft = attr.creationTime();
-                                    long imageTime = ft.to(TimeUnit.MICROSECONDS);
+                                    boolean missingTs = true;
 
-                                    if (imageStartTime == 0) {
-                                        imageStartTime = imageTime;
+                                    try {
+                                        TiffOutputSet outputSet = null;
+
+                                        // note that metadata might be null if no metadata is found.
+                                        final ImageMetadata metadata = Imaging.getMetadata(sourceFile);
+                                        final JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
+                                        if (null != jpegMetadata) {
+                                            // note that exif might be null if no Exif metadata is found.
+                                            final TiffImageMetadata exif = jpegMetadata.getExif();
+
+                                            if (null != exif) {
+                                                String[] fv = exif.getFieldValue(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL);
+
+                                                if (fv != null && fv.length > 0) {
+                                                    SimpleDateFormat format1 = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+                                                    Date d1 = format1.parse(fv[0]);
+
+                                                    long imageTime = d1.getTime() * 1000;
+
+                                                    if (imageStartTime == 0) {
+                                                        imageStartTime = imageTime;
+                                                    }
+
+                                                    int n = tagIndex + 1;
+                                                    long diff = (imageTime - imageStartTime) - (tag.time - tagStartTime);
+
+                                                    if (prevDiff == 0) {
+                                                        prevDiff = diff;
+                                                    }
+
+                                                    long diffDiff = prevDiff - diff;
+                                                    currentAverage = (currentAverage * n + diffDiff) / n;
+                                                    variance = (variance * n + Math.pow(diffDiff - currentAverage, 2)) / n;
+                                                    prevDiff = diff;
+
+                                                    logWriter.write(String.format("tag %d (%.2fs), image %s (%.2fs), time diff: %.2fs",
+                                                            tag.sequence, (double)(tag.time - tagStartTime) / 1e6, imageName, (double)(imageTime - imageStartTime) / 1e6,
+                                                            (double) diff / 1e6));
+
+                                                    if (Math.abs((double) diff / 1e6) > 10.0) {
+                                                        logWriter.write(", LARGE DIFF");
+                                                    }
+
+                                                    missingTs = false;
+                                                }
+                                            }
+                                        }
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
                                     }
 
-                                    long diff = (imageTime - imageStartTime) - (tag.time - tagStartTime);
-
-                                    logWriter.write(String.format("tag %d, image %s, time diff: %.2fs", tag.sequence, imageName, (double)diff / 1e6));
-
-                                    if (Math.abs((double)diff / 1e6) > 10.0) {
-                                        logWriter.write(", LARGE DIFF");
+                                    if (missingTs) {
+                                        logWriter.write(String.format("tag %d, image %s, missing original date time", tag.sequence, imageName));
                                     }
 
                                     updateImageMetaData(sourceFile,
@@ -377,7 +426,7 @@ public class CamExportDialog extends JDialog {
                         writer.close();
                         logWriter.close();
 
-                        setStatus(String.format("Exported %d tags, missing tags %d, images not updated %d", tags.size(), missing, imagesMissing), false);
+                        setStatus(String.format("Exported %d tags, missing tags %d, images not updated %d, sdt dev %.2f", tags.size(), missing, imagesMissing, Math.sqrt(variance) / 1e6), false);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
