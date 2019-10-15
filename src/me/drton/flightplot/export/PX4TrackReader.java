@@ -1,20 +1,24 @@
 package me.drton.flightplot.export;
 
+import me.drton.jmavlib.conversion.RotationConversion;
 import me.drton.jmavlib.log.FormatErrorException;
 import me.drton.jmavlib.log.px4.PX4LogReader;
 
+import javax.vecmath.Matrix3d;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Created by ada on 23.12.13.
  */
 public class PX4TrackReader extends AbstractTrackReader {
-    private static final String GPOS_LAT = "GPS.Lat";
-    private static final String GPOS_LON = "GPS.Lon";
-    private static final String GPOS_ALT = "GPS.Alt";
+    private static final String GPOS_LAT = "GPOS.Lat";
+    private static final String GPOS_LON = "GPOS.Lon";
+    private static final String GPOS_ALT = "GPOS.Alt";
     private static final String GPSP_LAT = "GPSP.Lat";
     private static final String GPSP_LON = "GPSP.Lon";
     private static final String GPSP_ALT = "GPSP.Alt";
@@ -27,6 +31,8 @@ public class PX4TrackReader extends AbstractTrackReader {
     private TrackPoint prev_setpoint = new TrackPoint(0, 0, 0, 0);
 
     private String flightMode = null;
+
+    public List<TrackPoint> camTriggers = new ArrayList<TrackPoint>();
 
     public PX4TrackReader(PX4LogReader reader, TrackReaderConfiguration config) throws IOException, FormatErrorException {
         super(reader, config);
@@ -57,6 +63,19 @@ public class PX4TrackReader extends AbstractTrackReader {
             Number pitch = (Number) data.get(ATT_PITCH);
             Number roll = (Number) data.get(ATT_ROLL);
             Number heading = (Number) data.get(ATT_YAW);
+
+            Number seq = (Number) data.get("CAMT.seq");
+
+            if (null != seq) {
+                Number latp = (Number) data.get("CAMT.lat");
+                Number lonp = (Number) data.get("CAMT.lon");
+                Number altp = (Number) data.get("CAMT.alt");
+
+                TrackPoint tag = new TrackPoint(latp.doubleValue(), lonp.doubleValue(), altp.doubleValue(), t);
+                tag.sequence = seq.intValue();
+
+                camTriggers.add(tag);
+            }
 
             if (spLat != null && spLon != null && spAlt != null) {
                 if (prev_setpoint.lat != spLat.doubleValue() || prev_setpoint.lon != spLon.doubleValue()) {

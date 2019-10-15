@@ -80,6 +80,10 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 writeSinglePoint(getFromParams(parameters, "C"), "RTL C");
                 writeSinglePoint(getFromParams(parameters, "D"), "RTL D");
 
+                List<TrackPoint> triggers = ((PX4TrackReader)trackReader).camTriggers;
+                for (int i = 0; i < triggers.size(); i ++) {
+                    writeSinglePoint(triggers.get(i), "CAM " + triggers.get(i).sequence);
+                }
             }
 
             writeEnd();
