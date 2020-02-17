@@ -26,7 +26,7 @@ public class PX4TrackReader extends AbstractTrackReader {
     private static final String ATT_PITCH = "ATT.Pitch";
     private static final String ATT_ROLL = "ATT.Roll";
     private static final String ATT_YAW = "ATT.Yaw";
-    private static final String STAT_MAINSTATE = "STAT.MainState";
+    private static final String STAT_MAINSTATE = "STAT.NavState";
 
     private TrackPoint prev_setpoint = new TrackPoint(0, 0, 0, 0);
 

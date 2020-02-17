@@ -28,7 +28,7 @@ public class TrackExporterConfiguration {
     }
 
     public void setSplitTracksByFlightMode(boolean splitTracksByFlightMode) {
-        splitTracksByFlightMode = splitTracksByFlightMode;
+        this.splitTracksByFlightMode = splitTracksByFlightMode;
     }
 
     public String getExportFormat() {
