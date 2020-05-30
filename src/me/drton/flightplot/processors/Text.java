@@ -12,7 +12,7 @@ public class Text extends PlotProcessor {
     @Override
     public Map<String, Object> getDefaultParameters() {
         Map<String, Object> params = new HashMap<String, Object>();
-        params.put("Field", "STATUS_TEXT.text");
+        params.put("Field", "TXT.Text");
         return params;
     }
 

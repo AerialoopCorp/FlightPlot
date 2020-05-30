@@ -202,7 +202,7 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         int index = 0;
 
         writer.write("<Placemark>\n");
-        writer.write("<name>mission</name>\n");
+        writer.write("<name>Mission Path</name>\n");
         writer.write("<description></description>\n");
         writer.write("<styleUrl>#setpoint</styleUrl>\n");
         writer.write("<gx:Track id=\"mission\">\n");

@@ -19,6 +19,9 @@ public class PX4TrackReader extends AbstractTrackReader {
     private static final String GPOS_LAT = "GPOS.Lat";
     private static final String GPOS_LON = "GPOS.Lon";
     private static final String GPOS_ALT = "GPOS.Alt";
+    private static final String GPS_LAT = "GPS.Lat";
+    private static final String GPS_LON = "GPS.Lon";
+    private static final String GPS_ALT = "GPS.Alt";
     private static final String GPSP_LAT = "GPSP.Lat";
     private static final String GPSP_LON = "GPSP.Lon";
     private static final String GPSP_ALT = "GPSP.Alt";

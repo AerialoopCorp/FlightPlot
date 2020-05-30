@@ -7,6 +7,7 @@ import me.drton.flightplot.processors.Simple;
 import me.drton.jmavlib.log.FormatErrorException;
 import me.drton.jmavlib.log.LogReader;
 import me.drton.jmavlib.log.MAVLinkLogReader;
+import me.drton.jmavlib.log.px4.MavlinkLog;
 import me.drton.jmavlib.log.px4.PX4LogReader;
 import me.drton.jmavlib.log.ulog.MessageLog;
 import me.drton.jmavlib.log.ulog.ULogReader;
@@ -891,6 +892,12 @@ public class FlightPlot {
         try {
             if (logFileNameLower.endsWith(".bin") || logFileNameLower.endsWith(".px4log")) {
                 logReaderNew = new PX4LogReader(logFileName);
+                for (MavlinkLog loggedMsg : ((PX4LogReader)logReaderNew).getMessages()) {
+                    long t = loggedMsg.timestamp / 1000;
+                    String time = String.format("%02d:%02d:%02d:%03d", t / 1000 / 60 / 60, t / 1000 / 60, ((t / 1000) % 60), t % 1000);
+                    logsTableModel.addRow(new Object[] { time, loggedMsg.getLevelStr(),
+                            loggedMsg.message });
+                }
             } else if (logFileNameLower.endsWith(".ulg")) {
                 ULogReader ulogReader = new ULogReader(logFileName);
                 logReaderNew = ulogReader;
@@ -901,7 +908,9 @@ public class FlightPlot {
                             loggedMsg.message });
                 }
             } else if (logFileNameLower.endsWith(".mavlink")) {
+                // FIXME: for debugging the following is needed to load the XML
                 //logReaderNew = new MAVLinkLogReader(logFileName,new MAVLinkSchema("common.xml"));
+                // FIXME: for production build the following is needed to load the XML
                 logReaderNew = new MAVLinkLogReader(logFileName, new MAVLinkSchema(FlightPlot.class.getClassLoader().getResourceAsStream("common.xml")));
             } else {
                 setStatus("Log format not supported: " + logFileName);
