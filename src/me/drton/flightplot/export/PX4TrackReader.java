@@ -59,6 +59,9 @@ public class PX4TrackReader extends AbstractTrackReader {
             Number lat = (Number) data.get(GPOS_LAT);
             Number lon = (Number) data.get(GPOS_LON);
             Number alt = (Number) data.get(GPOS_ALT);
+            Number gpsLat = (Number) data.get(GPS_LAT);
+            Number gpsLon = (Number) data.get(GPS_LON);
+            Number gpsAlt = (Number) data.get(GPS_ALT);
             Number spLat = (Number) data.get(GPSP_LAT);
             Number spLon = (Number) data.get(GPSP_LON);
             Number spAlt = (Number) data.get(GPSP_ALT);
@@ -105,6 +108,13 @@ public class PX4TrackReader extends AbstractTrackReader {
                     point.radPitch = pitch.doubleValue();
                     point.radRoll = roll.doubleValue();
                     point.heading = heading.doubleValue();
+                }
+
+                if (gpsAlt != null && gpsLat != null && gpsLon != null) {
+                    point.gpsAlt = gpsAlt.doubleValue();
+                    point.gpsLat = gpsLat.doubleValue();
+                    point.gpsLon = gpsLon.doubleValue();
+                    point.hasGps = true;
                 }
 
                 return point;

@@ -7,9 +7,13 @@ public class TrackPoint {
     public final double lat;        /// latitude
     public final double lon;        /// longitude
     public final double alt;        /// altitude AMLS
-    public final long time;         /// unix time in milliseconds
+    public double gpsLat;        /// latitude
+    public double gpsLon;        /// longitude
+    public double gpsAlt;        /// altitude AMLS
+    public long time;         /// unix time in milliseconds
     public final String flightMode; /// flight mode
     public boolean setpoint;
+    public boolean hasGps;
     public int spType;
     public double radRoll;
     public double radPitch;

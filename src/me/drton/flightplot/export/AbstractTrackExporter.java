@@ -18,7 +18,6 @@ public abstract class AbstractTrackExporter implements TrackExporter {
     protected TrackExporterConfiguration config;
     protected String title;
     protected Writer writer;
-    protected int trackPart = 0;
     protected String flightMode = null;
 
     @Override
@@ -29,9 +28,14 @@ public abstract class AbstractTrackExporter implements TrackExporter {
         this.title = title;
         boolean trackStarted = false;
         ArrayList<TrackPoint> setpoints = new ArrayList<TrackPoint>();
+        int trackPart = 0;
+        boolean haveGps = false;
 
         try {
             writeStart();
+
+            writeGroupStart("Flight Path");
+
             while (true) {
                 TrackPoint point = trackReader.readNextPoint();
                 if (point == null) {
@@ -43,19 +47,27 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                     continue;
                 }
 
+                if (point.hasGps) {
+                    // Remember that we have points with GPS coordinates for later
+                    haveGps = true;
+                }
+
                 if (!trackStarted || (point.flightMode != null && !point.flightMode.equals(flightMode))) {
                     if (trackStarted) {
                         writePoint(point);  // Write this point at the end of previous track to avoid interruption of track
                         writeTrackPartEnd();
                     }
+
                     flightMode = point.flightMode;
                     String trackPartName;
+
                     if (point.flightMode != null) {
                         trackPartName = String.format("%s: %s", trackPart, point.flightMode);
                         trackPart++;
                     } else {
                         trackPartName = "Track";
                     }
+
                     writeTrackPartStart(trackPartName);
                     trackStarted = true;
                 }
@@ -66,10 +78,49 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 writeTrackPartEnd();
             }
 
+            writeGroupEnd();
+
+            if (haveGps) {
+                // Run through the whole log again and write GPS path
+                writeGroupStart("Alternate Position");
+
+                trackReader.getLogReader().seek(0);
+
+                flightMode = "GPS";
+                writeTrackPartStart("GPS");
+
+                while (true) {
+                    TrackPoint point = trackReader.readNextPoint();
+                    if (point == null) {
+                        break;
+                    }
+
+                    if (point.setpoint) {
+                        // Don't store them anymore, we did that in the last run
+                        continue;
+                    }
+
+                    if (!point.hasGps) {
+                        // GPS coordinates might not be available
+                        continue;
+                    }
+
+                    writeGPSPoint(point);
+                }
+
+                writeTrackPartEnd();
+
+                writeGroupEnd();
+            }
+
+            writeGroupStart("Setpoints");
             writeSetpoints(setpoints);
+            writeGroupEnd();
 
             if (trackReader.getLogReader() instanceof PX4LogReader) {
                 Map<String, Object> parameters = ((PX4LogReader)trackReader.getLogReader()).getParameters();
+
+                writeGroupStart("RTL Points");
 
                 writeSinglePoint(getFromParams(parameters, "1"), "RTL 1");
                 writeSinglePoint(getFromParams(parameters, "2"), "RTL 2");
@@ -80,10 +131,16 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 writeSinglePoint(getFromParams(parameters, "C"), "RTL C");
                 writeSinglePoint(getFromParams(parameters, "D"), "RTL D");
 
+                writeGroupEnd();
+
+                writeGroupStart("Camera Triggers");
+
                 List<TrackPoint> triggers = ((PX4TrackReader)trackReader).camTriggers;
                 for (int i = 0; i < triggers.size(); i ++) {
                     writeSinglePoint(triggers.get(i), "CAM " + triggers.get(i).sequence);
                 }
+
+                writeGroupEnd();
             }
 
             writeEnd();
@@ -120,17 +177,21 @@ public abstract class AbstractTrackExporter implements TrackExporter {
 
     protected abstract void writeStart() throws IOException;
 
+    protected void writeGroupStart(String name) throws IOException {}
+
     protected abstract void writeTrackPartStart(String trackPartName) throws IOException;
 
     protected abstract void writePoint(TrackPoint point) throws IOException;
 
+    protected void writeGPSPoint(TrackPoint point) throws IOException {}
+
     protected abstract void writeTrackPartEnd() throws IOException;
+
+    protected void writeGroupEnd() throws IOException {}
 
     protected abstract void writeEnd() throws IOException;
 
-    protected void writeSetpoints(List<TrackPoint> setpoints) throws IOException {
-
-    }
+    protected void writeSetpoints(List<TrackPoint> setpoints) throws IOException {}
 
     protected abstract void writeSinglePoint(TrackPoint point, String name) throws IOException;
 }

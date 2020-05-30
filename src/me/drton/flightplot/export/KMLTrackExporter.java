@@ -45,6 +45,8 @@ public class KMLTrackExporter extends AbstractTrackExporter {
             return LINE_STYLE_BLUE;
         } else if ("AUTO_OFFBOARD".equals(flightMode)) {
             return LINE_STYLE_BLUE;
+        } else if ("GPS".equals(flightMode)) {
+            return "gps";
         } else {
             return LINE_STYLE_RED;
         }
@@ -57,12 +59,6 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("<Document>\n");
         writer.write("<name>" + this.title + "</name>\n");
         writer.write("<description></description>\n");
-        writer.write("<Style id=\"" + LINE_STYLE_YELLOW + "\">\n");
-        writer.write("<LineStyle>\n");
-        writer.write("<color>7f00ffff</color>\n");
-        writer.write("<width>4</width>\n");
-        writer.write("</LineStyle>\n");
-        writer.write("</Style>\n");
         writer.write("<Style id=\"" + LINE_STYLE_BLUE + "\">\n");
         writer.write("<LineStyle>\n");
         writer.write("<color>7fff0000</color>\n");
@@ -105,6 +101,24 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("<width>6</width>\n");
         writer.write("</LineStyle>\n");
         writer.write("</Style>\n");
+        writer.write("<Style id=\"gps\">\n");
+        writer.write("<LineStyle>\n");
+        writer.write("<color>ff14ff22</color>\n");
+        writer.write("<width>2</width>\n");
+        writer.write("</LineStyle>\n");
+        writer.write("</Style>\n");
+    }
+
+    @Override
+    protected void writeGroupStart(String name) throws IOException {
+        writer.write("<Folder>\n");
+        writer.write("<name>" + name + "</name>\n");
+        writer.write("<open>1</open>\n");
+    }
+
+    @Override
+    protected void writeGroupEnd() throws IOException {
+        writer.write("</Folder>\n");
     }
 
     @Override
@@ -148,6 +162,11 @@ public class KMLTrackExporter extends AbstractTrackExporter {
 
         writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
         writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.lon, point.lat, point.alt));
+    }
+
+    protected void writeGPSPoint(TrackPoint point) throws IOException {
+        writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
+        writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.gpsLon, point.gpsLat, point.gpsAlt));
     }
 
     private double[] reproject(TrackPoint ref, double x, double y, double z) {
