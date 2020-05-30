@@ -29,9 +29,14 @@ public class GPXTrackExporter extends AbstractTrackExporter {
 
     @Override
     protected void writePoint(TrackPoint point) throws IOException {
-        writer.write(String.format(Locale.ROOT, "<trkpt lat=\"%.10f\" lon=\"%.10f\">\n", point.lat, point.lon));
-        writer.write(String.format(Locale.ROOT, "<ele>%.2f</ele>\n", point.alt));
-        writer.write(String.format("<time>%s</time>\n", dateFormatter.format(point.time / 1000)));
+        writePoint(point.time, point.lat, point.lon, point.alt);
+    }
+
+    @Override
+    protected void writePoint(long time, double lat, double lon, double alt) throws IOException {
+        writer.write(String.format(Locale.ROOT, "<trkpt lat=\"%.10f\" lon=\"%.10f\">\n", lat, lon));
+        writer.write(String.format(Locale.ROOT, "<ele>%.2f</ele>\n", alt));
+        writer.write(String.format("<time>%s</time>\n", dateFormatter.format(time/ 1000)));
         writer.write("</trkpt>\n");
     }
 

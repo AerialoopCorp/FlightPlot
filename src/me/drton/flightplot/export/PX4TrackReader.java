@@ -1,6 +1,8 @@
 package me.drton.flightplot.export;
 
 import me.drton.jmavlib.conversion.RotationConversion;
+import me.drton.jmavlib.geo.GlobalPositionProjector;
+import me.drton.jmavlib.geo.LatLonAlt;
 import me.drton.jmavlib.log.FormatErrorException;
 import me.drton.jmavlib.log.px4.PX4LogReader;
 
@@ -22,6 +24,12 @@ public class PX4TrackReader extends AbstractTrackReader {
     private static final String GPS_LAT = "GPS.Lat";
     private static final String GPS_LON = "GPS.Lon";
     private static final String GPS_ALT = "GPS.Alt";
+    private static final String VISN_X = "VISN.X";
+    private static final String VISN_Y = "VISN.Y";
+    private static final String VISN_Z = "VISN.Z";
+    private static final String REF_LAT = "LPOS.RLat";
+    private static final String REF_LON = "LPOS.RLon";
+    private static final String REF_ALT = "LPOS.RAlt";
     private static final String GPSP_LAT = "GPSP.Lat";
     private static final String GPSP_LON = "GPSP.Lon";
     private static final String GPSP_ALT = "GPSP.Alt";
@@ -34,6 +42,8 @@ public class PX4TrackReader extends AbstractTrackReader {
     private TrackPoint prev_setpoint = new TrackPoint(0, 0, 0, 0);
 
     private String flightMode = null;
+
+    GlobalPositionProjector positionProjector = new GlobalPositionProjector();
 
     public List<TrackPoint> camTriggers = new ArrayList<TrackPoint>();
 
@@ -69,6 +79,18 @@ public class PX4TrackReader extends AbstractTrackReader {
             Number pitch = (Number) data.get(ATT_PITCH);
             Number roll = (Number) data.get(ATT_ROLL);
             Number heading = (Number) data.get(ATT_YAW);
+            Number x = (Number) data.get(VISN_X);
+            Number y = (Number) data.get(VISN_Y);
+            Number z = (Number) data.get(VISN_Z);
+
+            Number rlat = (Number) data.get(REF_LAT);
+            Number rlon = (Number) data.get(REF_LON);
+            Number ralt = (Number) data.get(REF_ALT);
+
+            if (!positionProjector.isInited() && rlat != null && rlon != null && ralt != null) {
+                LatLonAlt latLonAlt = new LatLonAlt(rlat.doubleValue(), rlon.doubleValue(), ralt.doubleValue());
+                positionProjector.init(latLonAlt);
+            }
 
             Number seq = (Number) data.get("CAMT.seq");
 
@@ -117,6 +139,15 @@ public class PX4TrackReader extends AbstractTrackReader {
                     point.hasGps = true;
                 }
 
+                if (positionProjector.isInited() && x != null && y != null && z != null) {
+                    LatLonAlt latLonAlt = positionProjector.reproject(new double[] {x.doubleValue(), y.doubleValue(), z.doubleValue()});
+
+                    point.visionAlt = latLonAlt.alt;
+                    point.visionLat = latLonAlt.lat;
+                    point.visionLon = latLonAlt.lon;
+                    point.hasVision = true;
+                }
+
                 return point;
             }
         }
@@ -151,6 +182,18 @@ public class PX4TrackReader extends AbstractTrackReader {
                     return "AUTO_TAKEOFF";
                 case 11:
                     return "AUTO_LAND";
+                case 12:
+                    return "AUTO_DESCEND";
+                case 13:
+                    return "TERMINATION";
+                case 14:
+                    return "OFFBOARD";
+                case 15:
+                    return "STABILIZED";
+                case 16:
+                    return "RATTITUDE";
+                case 17:
+                    return "AUTO_TAKEOFF";
                 default:
                     return String.format("UNKNOWN(%s)", flightMode.intValue());
             }

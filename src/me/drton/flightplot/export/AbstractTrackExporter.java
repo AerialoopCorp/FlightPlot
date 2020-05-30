@@ -30,6 +30,7 @@ public abstract class AbstractTrackExporter implements TrackExporter {
         ArrayList<TrackPoint> setpoints = new ArrayList<TrackPoint>();
         int trackPart = 0;
         boolean haveGps = false;
+        boolean haveVision = false;
 
         try {
             writeStart();
@@ -50,6 +51,11 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 if (point.hasGps) {
                     // Remember that we have points with GPS coordinates for later
                     haveGps = true;
+                }
+
+                if (point.hasVision) {
+                    // Remember that we have points with vision coordinates for later
+                    haveVision = true;
                 }
 
                 if (!trackStarted || (point.flightMode != null && !point.flightMode.equals(flightMode))) {
@@ -80,42 +86,74 @@ public abstract class AbstractTrackExporter implements TrackExporter {
 
             writeGroupEnd();
 
-            if (haveGps) {
+            if (haveGps || haveVision) {
                 // Run through the whole log again and write GPS path
                 writeGroupStart("Alternate Position");
 
-                trackReader.getLogReader().seek(0);
+                if (haveGps) {
+                    trackReader.getLogReader().seek(0);
 
-                flightMode = "GPS";
-                writeTrackPartStart("GPS");
+                    flightMode = "GPS";
+                    writeTrackPartStart("GPS");
 
-                while (true) {
-                    TrackPoint point = trackReader.readNextPoint();
-                    if (point == null) {
-                        break;
+                    while (true) {
+                        TrackPoint point = trackReader.readNextPoint();
+                        if (point == null) {
+                            break;
+                        }
+
+                        if (point.setpoint) {
+                            // Don't store them anymore, we did that in the last run
+                            continue;
+                        }
+
+                        if (!point.hasGps) {
+                            // GPS coordinates not available
+                            continue;
+                        }
+
+                        writePoint(point.time, point.gpsLat, point.gpsLon, point.gpsAlt);
                     }
 
-                    if (point.setpoint) {
-                        // Don't store them anymore, we did that in the last run
-                        continue;
-                    }
-
-                    if (!point.hasGps) {
-                        // GPS coordinates might not be available
-                        continue;
-                    }
-
-                    writeGPSPoint(point);
+                    writeTrackPartEnd();
                 }
 
-                writeTrackPartEnd();
+                if (haveVision) {
+                    trackReader.getLogReader().seek(0);
+
+                    flightMode = "vision";
+                    writeTrackPartStart("Vision");
+
+                    while (true) {
+                        TrackPoint point = trackReader.readNextPoint();
+                        if (point == null) {
+                            break;
+                        }
+
+                        if (point.setpoint) {
+                            // Don't store them anymore, we did that in the last run
+                            continue;
+                        }
+
+                        if (!point.hasVision) {
+                            // Vision coordinates not available
+                            continue;
+                        }
+
+                        writePoint(point.time, point.visionLat, point.visionLon, point.visionAlt);
+                    }
+
+                    writeTrackPartEnd();
+                }
 
                 writeGroupEnd();
             }
 
-            writeGroupStart("Setpoints");
-            writeSetpoints(setpoints);
-            writeGroupEnd();
+            if (!setpoints.isEmpty()) {
+                writeGroupStart("Setpoints");
+                writeSetpoints(setpoints);
+                writeGroupEnd();
+            }
 
             if (trackReader.getLogReader() instanceof PX4LogReader) {
                 Map<String, Object> parameters = ((PX4LogReader)trackReader.getLogReader()).getParameters();
@@ -183,7 +221,7 @@ public abstract class AbstractTrackExporter implements TrackExporter {
 
     protected abstract void writePoint(TrackPoint point) throws IOException;
 
-    protected void writeGPSPoint(TrackPoint point) throws IOException {}
+    protected abstract void writePoint(long time, double lat, double lon, double alt) throws IOException;
 
     protected abstract void writeTrackPartEnd() throws IOException;
 

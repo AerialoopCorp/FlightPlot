@@ -47,6 +47,8 @@ public class KMLTrackExporter extends AbstractTrackExporter {
             return LINE_STYLE_BLUE;
         } else if ("GPS".equals(flightMode)) {
             return "gps";
+        } else if ("vision".equals(flightMode)) {
+            return "vision";
         } else {
             return LINE_STYLE_RED;
         }
@@ -107,6 +109,12 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         writer.write("<width>2</width>\n");
         writer.write("</LineStyle>\n");
         writer.write("</Style>\n");
+        writer.write("<Style id=\"vision\">\n");
+        writer.write("<LineStyle>\n");
+        writer.write("<color>fff900f3</color>\n");
+        writer.write("<width>2</width>\n");
+        writer.write("</LineStyle>\n");
+        writer.write("</Style>\n");
     }
 
     @Override
@@ -160,13 +168,12 @@ public class KMLTrackExporter extends AbstractTrackExporter {
         //writer.write("</outerBoundaryIs>\n");
         writer.write("</LineString>\n");*/
 
-        writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
-        writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.lon, point.lat, point.alt));
+        writePoint(point.time, point.lat, point.lon, point.alt);
     }
 
-    protected void writeGPSPoint(TrackPoint point) throws IOException {
-        writer.write(String.format("<when>%s</when>\n", dateFormatter.format(point.time / 1000)));
-        writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", point.gpsLon, point.gpsLat, point.gpsAlt));
+    protected void writePoint(long time, double lat, double lon, double alt) throws IOException {
+        writer.write(String.format("<when>%s</when>\n", dateFormatter.format(time / 1000)));
+        writer.write(String.format(Locale.ROOT, "<gx:coord>%.10f %.10f %.2f</gx:coord>\n", lon, lat, alt));
     }
 
     private double[] reproject(TrackPoint ref, double x, double y, double z) {
