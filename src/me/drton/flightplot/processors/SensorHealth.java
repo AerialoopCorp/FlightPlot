@@ -63,6 +63,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(512l, "TERRAIN");
         sensors.put(1024l, "MANUAL_CONTROL");
         sensors.put(2048l, "DATA_LINK");
+        sensors.put(4096l, "VOTED_SENSOR");
         states.put("HEAL.Fail", sensors);
 
         sensors = new LinkedHashMap<Long, String>();
