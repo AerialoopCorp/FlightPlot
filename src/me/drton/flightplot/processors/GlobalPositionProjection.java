@@ -12,11 +12,13 @@ import java.util.Map;
 public class GlobalPositionProjection extends PlotProcessor {
     private GlobalPositionProjector positionProjector = new GlobalPositionProjector();
     private String[] param_Fields;
+    private String[] param_RefFields;
 
     @Override
     public Map<String, Object> getDefaultParameters() {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("Fields", "GPS.Lat GPS.Lon");
+        params.put("Ref Fields", "LPOS.RLat LPOS.RLon");
         params.put("Ref", "");
         return params;
     }
@@ -25,6 +27,7 @@ public class GlobalPositionProjection extends PlotProcessor {
     public void init() {
         positionProjector.reset();
         param_Fields = ((String) parameters.get("Fields")).split(WHITESPACE_RE);
+        param_RefFields = ((String) parameters.get("Ref Fields")).split(WHITESPACE_RE);
         String[] ref = ((String) parameters.get("Ref")).split(WHITESPACE_RE);
         if (ref.length >= 2) {
             positionProjector.init(new LatLonAlt(Double.parseDouble(ref[0]), Double.parseDouble(ref[1]), 0.0));
@@ -38,14 +41,31 @@ public class GlobalPositionProjection extends PlotProcessor {
         // GPS
         Number latNum = (Number) update.get(param_Fields[0]);
         Number lonNum = (Number) update.get(param_Fields[1]);
+
         if (latNum != null && lonNum != null) {
             LatLonAlt latLonAlt = new LatLonAlt(latNum.doubleValue(), lonNum.doubleValue(), 0.0);
-            if (!positionProjector.isInited()) {
-                positionProjector.init(latLonAlt);
+
+            if (positionProjector.isInited()) {
+                double[] xyz = positionProjector.project(latLonAlt);
+                addPoint(0, time, xyz[0]);
+                addPoint(1, time, xyz[1]);
+
+            } else {
+                if (param_RefFields.length == 2) {
+                    Number refLatNum = (Number) update.get(param_RefFields[0]);
+                    Number refLonNum = (Number) update.get(param_RefFields[1]);
+
+                    if (refLatNum != null && refLonNum != null && Math.abs(refLatNum.doubleValue()) > 0.0000001 &&
+                            Math.abs(refLonNum.doubleValue()) > 0.0000001) {
+                        LatLonAlt refLatLonAlt = new LatLonAlt(refLatNum.doubleValue(), refLonNum.doubleValue(), 0.0);
+
+                        positionProjector.init(refLatLonAlt);
+                    }
+
+                } else {
+                    positionProjector.init(latLonAlt);
+                }
             }
-            double[] xyz = positionProjector.project(latLonAlt);
-            addPoint(0, time, xyz[0]);
-            addPoint(1, time, xyz[1]);
         }
     }
 }
