@@ -75,7 +75,7 @@ public class FlightPlot {
     }
 
     private static String appName = "FlightPlot";
-    private static String version = "0.3.1";
+    private static String version = "1.0.0";
     private static String appNameAndVersion = appName + " v." + version;
     private static String colorParamPrefix = "Color ";
     private final Preferences preferences;
@@ -100,6 +100,7 @@ public class FlightPlot {
     private JButton logInfoButton;
     private JCheckBox markerCheckBox;
     private JButton savePresetButton;
+    private JCheckBox fullRangeCheckBox;
     private JCheckBoxMenuItem autosavePresets;
     private JRadioButtonMenuItem[] timeModeItems;
     private LogReader logReader = null;
@@ -328,6 +329,12 @@ public class FlightPlot {
                 setChartMarkers();
             }
         });
+        fullRangeCheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                processFile();
+            }
+        });
 
         mainFrame.pack();
         mainFrame.setVisible(true);
@@ -496,6 +503,7 @@ public class FlightPlot {
         autosave = preferences.getBoolean("Autosave", false);
         autosavePresets.setState(autosave);
         markerCheckBox.setSelected(preferences.getBoolean("ShowMarkers", false));
+        fullRangeCheckBox.setSelected(preferences.getBoolean("FullRange", false));
         trackExportDialog.loadPreferences(preferences);
         plotExportDialog.loadPreferences(preferences);
         camExportDialog.loadPreferences(preferences);
@@ -560,6 +568,7 @@ public class FlightPlot {
             preferences.put("TimeMode", Integer.toString(timeMode));
             preferences.putBoolean("Autosave", autosave);
             preferences.putBoolean("ShowMarkers", markerCheckBox.isSelected());
+            preferences.putBoolean("FullRange", fullRangeCheckBox.isSelected());
             trackExportDialog.savePreferences(preferences);
             plotExportDialog.savePreferences(preferences);
             camExportDialog.savePreferences(preferences);
@@ -1195,6 +1204,11 @@ public class FlightPlot {
         long timeStop = (long) ((range.getUpperBound() + range.getLength()) * 1e6);
         timeStart = Math.max(logReader.getStartMicroseconds(), timeStart);
         timeStop = Math.min(logReader.getStartMicroseconds() + logReader.getSizeMicroseconds(), timeStop);
+
+        if (fullRangeCheckBox.isSelected()) {
+            timeStart = logReader.getStartMicroseconds();
+            timeStop = logReader.getStartMicroseconds() + logReader.getSizeMicroseconds();
+        }
 
         double timeScale = (selectDomainAxis(timeMode) == domainAxisDate) ? 1000.0 : 1.0;
 
