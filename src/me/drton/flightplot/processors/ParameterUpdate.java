@@ -1,6 +1,7 @@
 package me.drton.flightplot.processors;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,22 +31,36 @@ public class ParameterUpdate extends PlotProcessor {
 
     @Override
     public void process(double time, Map<String, Object> update) {
-        Object v = update.get(paramField);
-        if (v != null && v instanceof String) {
-            boolean isFloat = true;
-            Object t = update.get(typeField);
-            if (t != null && t instanceof Number) {
-                isFloat = ((Number)t).equals(2);
-            }
+        Object v = update.get("PARM");
+        StringBuffer marker = new StringBuffer();
 
-            Object n = update.get(valueField);
-            if (n != null && n instanceof Number) {
-                if (isFloat) {
-                    addMarker(0, time, String.format("%s: %.3f", v, n));
-                } else {
-                    addMarker(0, time, String.format("%s: %d", v, ((Float)n).intValue()));
+        if (v != null) {
+            List<Map<String, Object>> store = (List<Map<String, Object>>)v;
+
+            for (Map<String, Object>  params : store) {
+                v = params.get(paramField);
+
+                if (v != null && v instanceof String) {
+                    boolean isFloat = true;
+                    Object t = params.get(typeField);
+                    if (t != null && t instanceof Number) {
+                        isFloat = ((Number)t).equals(2);
+                    }
+
+                    Object n = params.get(valueField);
+                    if (n != null && n instanceof Number) {
+                        if (isFloat) {
+                            marker.append(String.format("%s: %s | ", v, n.toString()));
+                        } else {
+                            marker.append(String.format("%s: %d | ", v, ((Float)n).intValue()));
+                        }
+                    }
                 }
             }
+        }
+
+        if (marker.length() >= 3) {
+            addMarker(0, time, marker.substring(0, marker.length() - 3));
         }
     }
 }
