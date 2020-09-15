@@ -32,12 +32,8 @@ import javax.vecmath.Matrix3d;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -332,7 +328,8 @@ public class CamExportDialog extends JDialog {
 
                             writer.write(imageName);
                             writer.write(",");
-                            writer.write(String.format(Locale.ENGLISH,"%.7f,%.7f,%.3f,%.3f,%.3f,%.3f", tag.lat, tag.lon, tag.alt, tag.radPitch, tag.radRoll, tag.heading));
+                            writer.write(String.format(Locale.ENGLISH,"%.7f,%.7f,%.3f,%.3f,%.3f,%.3f",
+                                    tag.lat, tag.lon, tag.alt, Math.toDegrees(tag.radPitch), Math.toDegrees(tag.radRoll), Math.toDegrees(tag.heading)));
 
                             try {
                                 File sourceFile = new File(file.getParentFile().getAbsolutePath() + File.separator + imageName);
