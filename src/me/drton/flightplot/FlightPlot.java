@@ -75,7 +75,7 @@ public class FlightPlot {
     }
 
     private static String appName = "FlightPlot";
-    private static String version = "1.0.2";
+    private static String version = "1.0.3";
     private static String appNameAndVersion = appName + " v." + version;
     private static String colorParamPrefix = "Color ";
     private final Preferences preferences;
@@ -100,8 +100,9 @@ public class FlightPlot {
     private JButton logInfoButton;
     private JCheckBox markerCheckBox;
     private JButton savePresetButton;
-    private JCheckBox fullRangeCheckBox;
     private JCheckBoxMenuItem autosavePresets;
+    private JCheckBoxMenuItem rememberFormats;
+    private JCheckBox fullRangeCheckBox;
     private JRadioButtonMenuItem[] timeModeItems;
     private LogReader logReader = null;
     private XYSeriesCollection dataset;
@@ -748,6 +749,9 @@ public class FlightPlot {
         });
         fileMenu.add(autosavePresets);
 
+        rememberFormats = new JCheckBoxMenuItem("Remember Formats");
+        fileMenu.add(rememberFormats);
+
         JMenuItem exportAsImageItem = new JMenuItem("Export As Image...");
         exportAsImageItem.addActionListener(new ActionListener() {
             @Override
@@ -900,7 +904,7 @@ public class FlightPlot {
         logsTableModel.setRowCount(0);
         try {
             if (logFileNameLower.endsWith(".bin") || logFileNameLower.endsWith(".px4log")) {
-                logReaderNew = new PX4LogReader(logFileName);
+                logReaderNew = new PX4LogReader(logFileName, rememberFormats.getState());
                 for (MavlinkLog loggedMsg : ((PX4LogReader)logReaderNew).getMessages()) {
                     long t = loggedMsg.timestamp / 1000;
                     String time = String.format("%02d:%02d:%02d:%03d", t / 1000 / 60 / 60, t / 1000 / 60, ((t / 1000) % 60), t % 1000);
