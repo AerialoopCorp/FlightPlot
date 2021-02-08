@@ -65,6 +65,7 @@ public class LogInfo {
             Map<String, Object> ver = logReader.getVersion();
             infoTableModel.addRow(new Object[]{"Hardware Version", ver.get("HW")});
             infoTableModel.addRow(new Object[]{"Firmware Version", ver.get("FW")});
+            infoTableModel.addRow(new Object[]{"Firmware Tag", ver.get("Tag")});
             infoTableModel.addRow(new Object[]{"UID", ver.get("UID")});
             infoTableModel.addRow(new Object[]{"Compile Time", ver.get("CTS")});
             Map<String, Object> parameters = logReader.getParameters();
