@@ -921,10 +921,13 @@ public class FlightPlot {
                             loggedMsg.message });
                 }
             } else if (logFileNameLower.endsWith(".mavlink")) {
-                // FIXME: for debugging the following is needed to load the XML
-                //logReaderNew = new MAVLinkLogReader(logFileName,new MAVLinkSchema("common.xml"));
-                // FIXME: for production build the following is needed to load the XML
-                logReaderNew = new MAVLinkLogReader(logFileName, new MAVLinkSchema(FlightPlot.class.getClassLoader().getResourceAsStream("common.xml")));
+                try {
+                    // for production build the following is needed to load the XML
+                    logReaderNew = new MAVLinkLogReader(logFileName, new MAVLinkSchema(FlightPlot.class.getClassLoader().getResourceAsStream("common.xml")));
+                } catch (IllegalArgumentException e) {
+                    // for debugging the following is needed to load the XML
+                    logReaderNew = new MAVLinkLogReader(logFileName,new MAVLinkSchema("common.xml"));
+                }
             } else {
                 setStatus("Log format not supported: " + logFileName);
                 return;
