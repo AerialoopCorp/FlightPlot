@@ -40,6 +40,7 @@ public class ProcessorsList {
         addProcessorClass(DistanceToWaypoint.class);
         addProcessorClass(DistanceToSetpoint.class);
         addProcessorClass(MavlinkPX4CustomMode.class);
+        addProcessorClass(PressureAltitude.class);
     }
 
     private void addProcessorClass(Class<? extends PlotProcessor> processorClass) {
