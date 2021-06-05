@@ -36,18 +36,26 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(131072l, "GYRO2");
         sensors.put(262144l, "ACCEL2");
         sensors.put(524288l, "MAG2");
-        sensors.put(1048576l, "GEOFENCE");
+        sensors.put(1048576l, "GEOFENCE (DEPRECATED)");
         sensors.put(2097152l, "AHRS");
         sensors.put(4194304l, "TERRAIN");
         sensors.put(8388608l, "REVERSE_MOTOR");
-        sensors.put(16777216l, "LOGGING");
+        sensors.put(16777216l, "LOGGING (DEPRECATED)");
         sensors.put(33554432l, "SENSOR_BATTERY");
         sensors.put(67108864l, "STORAGE");
-        sensors.put(134217728l, "GYRO_CONSISTENT");
-        sensors.put(268435456l, "ACCEL_CONSISTENT");
-        sensors.put(536870912l, "MAG_CONSISTENT");
+        sensors.put(134217728l, "SATCOM");
+        sensors.put(268435456l, "PREARM_CHECK");
+        sensors.put(536870912l, "OBSTACLE_AVOIDANCE");
         sensors.put(1073741824l, "AVIONICS_POWER");
-        sensors.put(2147483648l, "SAFETY");
+        sensors.put(2147483648l, "SAFETY (DEPRECATED)");
+        sensors.put(4294967296l, "GYRO_CONSISTENT");
+        sensors.put(8589934592l, "ACCEL_CONSISTENT");
+        sensors.put(17179869184l, "MAG_CONSISTENT");
+        sensors.put(34359738368l, "AVIONICS_POWER");
+        sensors.put(68719476736l, "STORAGE");
+        sensors.put(137438953472l, "BGPS");
+        sensors.put(274877906944l, "STORAGE");
+        sensors.put(549755813888l, "ADSB");
         states.put("HEAL.Sens", sensors);
 
         sensors = new LinkedHashMap<Long, String>();
@@ -129,6 +137,33 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(32768l, "d vel bias");
         states.put("EST0.fFault", sensors);
         states.put("estimator_status_0.filter_fault_flags", sensors);
+
+        sensors = new LinkedHashMap<Long, String>();
+        sensors.put(1l, "OFF");
+        sensors.put(2l, "READY");
+        sensors.put(4l, "GENERATING");
+        sensors.put(8l, "CHARGING");
+        sensors.put(16l, "REDUCED_POWER");
+        sensors.put(32l, "MAXPOWER");
+        sensors.put(64l, "OVERTEMP_WARNING");
+        sensors.put(128l, "OVERTEMP_FAULT");
+        sensors.put(256l, "ELECTRONICS_OVERTEMP_WARNING");
+        sensors.put(512l, "ELECTRONICS_OVERTEMP_FAULT");
+        sensors.put(1024l, "ELECTRONICS_FAULT");
+        sensors.put(2048l, "POWERSOURCE_FAULT");
+        sensors.put(4096l, "COMMUNICATION_WARNING");
+        sensors.put(8192l, "COOLING_WARNING");
+        sensors.put(16384l, "POWER_RAIL_FAULT");
+        sensors.put(32768l, "OVERCURRENT_FAULT");
+        sensors.put(65536l, "BATTERY_OVERCHARGE_CURRENT_FAULT");
+        sensors.put(131072l, "OVERVOLTAGE_FAULT");
+        sensors.put(262144l, "BATTERY_UNDERVOLT_FAULT");
+        sensors.put(524288l, "START_INHIBITED");
+        sensors.put(1048576l, "MAINTENANCE_REQUIRED");
+        sensors.put(2097152l, "WARMING_UP");
+        sensors.put(4194304l, "IDLE");
+        states.put("GEN.status", sensors);
+        states.put("generator_status_0.status", sensors);
     };
 
     @Override
