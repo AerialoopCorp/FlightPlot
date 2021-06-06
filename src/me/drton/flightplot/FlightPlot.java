@@ -292,10 +292,10 @@ public class FlightPlot {
 
         // Open Log Dialog
         FileNameExtensionFilter[] logExtensionfilters = new FileNameExtensionFilter[]{
-                new FileNameExtensionFilter("All known Log files (*.px4log, *.bin, *.ulg, *.mavlink)", "px4log", "bin", "ulg", "mavlink"),
+                new FileNameExtensionFilter("All known log files", "px4log", "bin", "ulg", "mavlink", "tlog"),
                 new FileNameExtensionFilter("PX4/APM Log (*.px4log, *.bin)", "px4log", "bin"),
                 new FileNameExtensionFilter("ULog (*.ulg)", "ulg"),
-                new FileNameExtensionFilter("MAVLink Logs (*.mavlink)", "mavlink")
+                new FileNameExtensionFilter("MAVLink Logs (*.mavlink, *.tlog)", "mavlink", "tlog")
         };
 
         openLogFileChooser = new JFileChooser();
@@ -920,7 +920,7 @@ public class FlightPlot {
                     logsTableModel.addRow(new Object[] { time, loggedMsg.getLevelStr(),
                             loggedMsg.message });
                 }
-            } else if (logFileNameLower.endsWith(".mavlink")) {
+            } else if (logFileNameLower.endsWith(".mavlink") || logFileNameLower.endsWith(".tlog")) {
                 try {
                     // for production build the following is needed to load the XML
                     logReaderNew = new MAVLinkLogReader(logFileName, new MAVLinkSchema(FlightPlot.class.getClassLoader().getResourceAsStream("common.xml")));
