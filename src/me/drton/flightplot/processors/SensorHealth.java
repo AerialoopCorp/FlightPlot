@@ -42,11 +42,11 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(8388608l, "REVERSE_MOTOR");
         sensors.put(16777216l, "LOGGING (DEPRECATED)");
         sensors.put(33554432l, "SENSOR_BATTERY");
-        sensors.put(67108864l, "STORAGE");
+        sensors.put(67108864l, "PROXIMITY");
         sensors.put(134217728l, "SATCOM");
         sensors.put(268435456l, "PREARM_CHECK");
         sensors.put(536870912l, "OBSTACLE_AVOIDANCE");
-        sensors.put(1073741824l, "AVIONICS_POWER");
+        //sensors.put(1073741824l, "not defined");
         sensors.put(2147483648l, "SAFETY (DEPRECATED)");
         sensors.put(4294967296l, "GYRO_CONSISTENT");
         sensors.put(8589934592l, "ACCEL_CONSISTENT");
@@ -54,7 +54,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(34359738368l, "AVIONICS_POWER");
         sensors.put(68719476736l, "STORAGE");
         sensors.put(137438953472l, "BGPS");
-        sensors.put(274877906944l, "STORAGE");
+        sensors.put(274877906944l, "COMPANION");
         sensors.put(549755813888l, "ADSB");
         states.put("HEAL.Sens", sensors);
 
@@ -199,15 +199,16 @@ public class SensorHealth extends PlotProcessor {
             long diff = sens ^ temp;
 
             StringBuffer marker = new StringBuffer();
-            for (int a = 0; a < 32; a++) {
-                boolean isDifferent = (diff & 1 << a) > 0;
-                String sensor = sensors.get(1l << a);
+            for (int a = 0; a < 64; a++) {
+                long shifted = 1l << a;
+                boolean isDifferent = (diff & shifted) > 0l;
+                String sensor = sensors.get(shifted);
                 if (sensor == null) {
-                    sensor = "unknown";
+                    sensor = String.valueOf(a);
                 }
 
                 if (isDifferent) {
-                    boolean val = (temp & 1 << a) > 0;
+                    boolean val = (temp & shifted) > 0;
                     marker.append(String.format("%s: %b | ", sensor, val));
                 }
             }
