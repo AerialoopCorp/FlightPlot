@@ -125,22 +125,36 @@ public class GPSDataExportDialog extends JDialog {
         return logReader.getSizeMicroseconds() / 1000000.0;
     }
 
+    private File getDestinationFile() {
+        return getDestinationFile(null, null);
+    }
+
     private File getDestinationFile(String extension, String description) {
         JFileChooser fc = new JFileChooser();
         if (lastExportDirectory != null) {
             fc.setCurrentDirectory(lastExportDirectory);
         }
-        FileNameExtensionFilter extensionFilter = new FileNameExtensionFilter(description, extension);
-        fc.setFileFilter(extensionFilter);
+
+        FileNameExtensionFilter extensionFilter = null;
+
+        if (description != null && extension != null) {
+            extensionFilter = new FileNameExtensionFilter(description, extension);
+            fc.setFileFilter(extensionFilter);
+        }
+
         fc.setDialogTitle("Export Tags");
         int returnVal = fc.showDialog(null, "Export");
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             lastExportDirectory = fc.getCurrentDirectory();
             String exportFileName = fc.getSelectedFile().toString();
-            String exportFileExtension = extensionFilter.getExtensions()[0];
-            if (extensionFilter == fc.getFileFilter() && !exportFileName.toLowerCase().endsWith(exportFileExtension)) {
-                exportFileName += ("." + exportFileExtension);
+
+            if (extensionFilter != null) {
+                String exportFileExtension = extensionFilter.getExtensions()[0];
+                if (extensionFilter == fc.getFileFilter() && !exportFileName.toLowerCase().endsWith(exportFileExtension)) {
+                    exportFileName += ("." + exportFileExtension);
+                }
             }
+
             File exportFile = new File(exportFileName);
             if (!exportFile.exists()) {
                 return exportFile;
@@ -157,7 +171,7 @@ public class GPSDataExportDialog extends JDialog {
     }
 
     private void export() {
-        final File file = getDestinationFile("ubx", "UBX");
+        final File file = getDestinationFile();
 
         setStatus("Exporting...", false);
         stopExport = false;
@@ -172,6 +186,8 @@ public class GPSDataExportDialog extends JDialog {
                         BufferedOutputStream bos1 = new BufferedOutputStream(new FileOutputStream(file + "_1"));
                         BufferedOutputStream bos2 = new BufferedOutputStream(new FileOutputStream(file + "_2"));
 
+                        logReader.seek(0);
+
                         Map<String, Object> data = new HashMap<String, Object>();
                         while (true) {
                             data.clear();
@@ -185,16 +201,16 @@ public class GPSDataExportDialog extends JDialog {
                             Number len = (Number) data.get("GPD0.len");
                             byte[] d = (byte[]) data.get("GPD0.data");
 
-                            // len > 0 means it's data from the GPS (negative length is data to the GPS)
+                            // len < 128 means it's data from the GPS (> 128 is data to the GPS)
 
-                            if (len != null && len.intValue() > 0) {
+                            if (len != null && len.intValue() < 128) {
                                 bos1.write(d, 0, len.intValue());
                             }
 
                             len = (Number) data.get("GPD1.len");
                             d = (byte[]) data.get("GPD1.data");
 
-                            if (len != null && len.intValue() > 0) {
+                            if (len != null && len.intValue() < 128) {
                                 bos2.write(d, 0, len.intValue());
                             }
 
