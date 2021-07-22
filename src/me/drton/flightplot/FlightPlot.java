@@ -121,6 +121,7 @@ public class FlightPlot {
     private TrackExportDialog trackExportDialog;
     private PlotExportDialog plotExportDialog;
     private CamExportDialog camExportDialog;
+    private GPSDataExportDialog gpsDataExportDialog;
     private NumberAxis domainAxisSeconds;
     private DateAxis domainAxisDate;
     private int timeMode = 0;
@@ -142,6 +143,7 @@ public class FlightPlot {
         trackExportDialog = new TrackExportDialog(exporters);
         plotExportDialog = new PlotExportDialog(this);
         camExportDialog = new CamExportDialog();
+        gpsDataExportDialog = new GPSDataExportDialog();
 
         preferences = Preferences.userRoot().node(appName);
         mainFrame = new JFrame(appNameAndVersion);
@@ -788,6 +790,15 @@ public class FlightPlot {
         });
         fileMenu.add(exportCam);
 
+        JMenuItem exportGPS = new JMenuItem("Export GPS Raw Data...");
+        exportGPS.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showGPSDataExportDialog();
+            }
+        });
+        fileMenu.add(exportGPS);
+
         if (!OSValidator.isMac()) {
             fileMenu.add(new JPopupMenu.Separator());
             JMenuItem exitItem = new JMenuItem("Exit");
@@ -1065,6 +1076,21 @@ public class FlightPlot {
         } catch (Exception e) {
             e.printStackTrace();
             showExportTrackStatusMessage("Tags could not be exported.");
+        }
+    }
+
+    public void showGPSDataExportDialog() {
+        if (logReader == null) {
+            JOptionPane.showMessageDialog(mainFrame, "Log file must be opened first.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            gpsDataExportDialog.display(logReader, getLogRange(timeMode));
+        } catch (Exception e) {
+            e.printStackTrace();
+            showExportTrackStatusMessage("GPS data could not be exported.");
         }
     }
 
