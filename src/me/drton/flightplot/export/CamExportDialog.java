@@ -271,8 +271,8 @@ public class CamExportDialog extends JDialog {
                                 Number alt = (Number) data.get("CAMT.alt");
 
                                 Number qw = (Number) data.get("CAMT.qw");
-                                Number qx = (Number) data.get("CAMT.qy");
-                                Number qy = (Number) data.get("CAMT.qx");
+                                Number qx = (Number) data.get("CAMT.qx");
+                                Number qy = (Number) data.get("CAMT.qy");
                                 Number qz = (Number) data.get("CAMT.qz");
 
                                 // Rotate with pitch if set
