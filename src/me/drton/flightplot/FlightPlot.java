@@ -75,7 +75,7 @@ public class FlightPlot {
     }
 
     private static String appName = "FlightPlot";
-    private static String version = "1.0.7";
+    private static String version = "1.0.8";
     private static String appNameAndVersion = appName + " v." + version;
     private static String colorParamPrefix = "Color ";
     private final Preferences preferences;
@@ -1275,26 +1275,6 @@ public class FlightPlot {
             }
             chart.getXYPlot().clearDomainMarkers();
             chart.getXYPlot().clearAnnotations();
-
-            if (logReader instanceof ULogReader) {
-                Map<String, List<ULogReader.ParamUpdate>> updateMap = ((ULogReader) logReader).parameterUpdates;
-                for (List<ULogReader.ParamUpdate> updList: updateMap.values()) {
-                    for (ULogReader.ParamUpdate upd: updList) {
-                        // add a labelled marker for each parameter update
-                        double mTime = (upd.getTimestamp() + timeOffset) * 1e-6;
-                        if (timeMode == TIME_MODE_GPS) {
-                            // time axis is msec instead of sec
-                            mTime *= 1e3;
-                        }
-                        final org.jfree.chart.plot.Marker updMarker = new ValueMarker(mTime);
-                        updMarker.setPaint(Color.black);
-                        updMarker.setLabel(upd.getName() + ":" + upd.getValue());
-                        updMarker.setLabelAnchor(RectangleAnchor.TOP_RIGHT);
-                        updMarker.setLabelTextAnchor(TextAnchor.TOP_LEFT);
-                        chart.getXYPlot().addDomainMarker(updMarker);
-                    }
-                }
-            }
 
             for (int i = 0; i < activeProcessors.size(); i++) {
                 PlotProcessor processor = processors[i];

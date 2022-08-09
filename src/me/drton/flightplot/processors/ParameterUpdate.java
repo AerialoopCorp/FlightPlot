@@ -52,7 +52,14 @@ public class ParameterUpdate extends PlotProcessor {
                         if (isFloat) {
                             marker.append(String.format("%s: %s | ", v, n.toString()));
                         } else {
-                            marker.append(String.format("%s: %d | ", v, ((Float)n).intValue()));
+                            if (n instanceof Integer) {
+                                // ULG ints are ints
+                                marker.append(String.format("%s: %d | ", v, ((Integer)n)));
+                            } else {
+                                // PX4LOG ints are floats
+                                marker.append(String.format("%s: %d | ", v, ((Float)n).intValue()));
+                            }
+
                         }
                     }
                 }
