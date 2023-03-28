@@ -21,6 +21,7 @@ public class AirspeedFromDiffPress extends PlotProcessor {
     private int model;
     private double tube_dia_mm;
     private double tube_len;
+    private double diff_press;
 
     @Override
     public Map<String, Object> getDefaultParameters() {
@@ -55,12 +56,13 @@ public class AirspeedFromDiffPress extends PlotProcessor {
     @Override
     public void process(double time, Map<String, Object> update) {
         double press = 0;
+
         Number v = (Number) update.get(param_diff_press);
-        if (v == null) {
-            return;
+        if (v != null) {
+            diff_press = Math.max(0.0, v.doubleValue() + param_dp_offset);
         }
 
-        press = Math.max(0.0, v.doubleValue() + param_dp_offset);
+        press = diff_press;
 
         v = (Number) update.get(param_baro_press);
         if (v != null) {
@@ -79,6 +81,10 @@ public class AirspeedFromDiffPress extends PlotProcessor {
 
         double density = baro_press / (287.1 * (temp - -273.15));
         double airspeed_correction = 0.0;
+
+        if (density < Float.MIN_NORMAL) {
+            return;
+        }
 
         if (model == 0 || model == 1) {
             double dp_corr = press * 96600.0 / baro_press;

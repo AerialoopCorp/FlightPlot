@@ -2,7 +2,6 @@ package me.drton.flightplot.processors;
 
 import me.drton.flightplot.ColorSupplier;
 import me.drton.flightplot.ProcessorPreset;
-import org.omg.Dynamic.Parameter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;

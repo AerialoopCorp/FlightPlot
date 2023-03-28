@@ -56,7 +56,13 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(137438953472l, "BGPS");
         sensors.put(274877906944l, "COMPANION");
         sensors.put(549755813888l, "ADSB");
+        sensors.put(1099511627776l, "GENERATOR");
+        sensors.put(2199023255552l, "RC_CALIBRATION");
+        sensors.put(4398046511104l, "PREC_LAND");
+        sensors.put(8796093022208l, "NTRIP");
+        sensors.put(17592186044416l, "BATTERY2");
         states.put("HEAL.Sens", sensors);
+        states.put("vehicle_status_0.onboard_control_sensors_health", sensors);
 
         sensors = new LinkedHashMap<Long, String>();
         sensors.put(1l, "FW_ENGINE");
@@ -72,6 +78,11 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(1024l, "MANUAL_CONTROL");
         sensors.put(2048l, "DATA_LINK");
         sensors.put(4096l, "VOTED_SENSOR");
+        sensors.put(8192l, "MISSION_INVALID");
+        sensors.put(16384l, "GEOFENCE");
+        sensors.put(32768l, "BATTERY2_LOW");
+        sensors.put(65536l, "BATTERY2_CRITICAL");
+        sensors.put(131072l, "STATUS_CORRUPT");
         states.put("HEAL.Fail", sensors);
 
         sensors = new LinkedHashMap<Long, String>();
@@ -164,6 +175,24 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(4194304l, "IDLE");
         states.put("GEN.status", sensors);
         states.put("generator_status_0.status", sensors);
+
+        sensors = new LinkedHashMap<Long, String>();
+        sensors.put(1l, "TIMEOUT");
+        sensors.put(2l, "MIN_ALT");
+        sensors.put(4l, "AIRSPEED");
+        sensors.put(8l, "none");
+        sensors.put(16l, "Z_VEL");
+        sensors.put(32l, "Z_ACC");
+        sensors.put(64l, "ATT");
+        sensors.put(128l, "PUSHER");
+        sensors.put(256l, "YAW");
+        sensors.put(512l, "MC_ATT");
+        sensors.put(1024l, "MC_YAW");
+        sensors.put(2048l, "MC_Z_VEL");
+        sensors.put(4096l, "MC_ALT");
+        states.put("VTOL.FsMask", sensors);
+        states.put("vtol_vehicle_status_0.failsafe_mask", sensors);
+
     };
 
     @Override
