@@ -12,21 +12,13 @@
         <mkdir dir="out/production/FlightPlot"/>
     </target>
 
-    <path id="javac2.class.path">
-        <pathelement location="lib/javac2.jar"/>
-        <pathelement location="lib/asm4-all.jar"/>
-        <pathelement location="lib/jdom.jar"/>
-        <pathelement location="lib/vecmath.jar"/>
-    </path>
-    <taskdef name="javac2" classname="com.intellij.ant.Javac2" classpathref="javac2.class.path"/>
-
     <target name="compile" description="Compile java sources" depends="make_dirs">
-        <javac2 destdir="out/production/FlightPlot" includeantruntime="false" debug="true" encoding="UTF8" target="1.6" source="1.6">
+        <javac destdir="out/production/FlightPlot" includeantruntime="false" debug="true" encoding="UTF8" target="1.6" source="1.6">
             <compilerarg value="-Djava.ext.dirs="/>
             <classpath refid="libsclasspath"/>
             <src path="src"/>
             <src path="jMAVlib/src"/>
-        </javac2>
+        </javac>
     </target>
 
     <target name="flightplot" description="Link classes and JARs for FlightPlot" depends="compile">
