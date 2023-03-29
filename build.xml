@@ -13,8 +13,7 @@
     </target>
 
     <target name="compile" description="Compile java sources" depends="make_dirs">
-        <javac destdir="out/production/FlightPlot" includeantruntime="false" debug="true" encoding="UTF8" target="1.6" source="1.6">
-            <compilerarg value="-Djava.ext.dirs="/>
+        <javac destdir="out/production/FlightPlot" includeantruntime="false" debug="true" encoding="UTF8" release="8">
             <classpath refid="libsclasspath"/>
             <src path="src"/>
             <src path="jMAVlib/src"/>

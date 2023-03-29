@@ -15,7 +15,7 @@ public class ProcessorsList {
     private Map<String, Class<? extends PlotProcessor>> processors
             = new HashMap<String, Class<? extends PlotProcessor>>();
 
-    public ProcessorsList() throws InstantiationException, IllegalAccessException {
+    public ProcessorsList() {
         addProcessorClass(Simple.class);
         addProcessorClass(Derivative.class);
         addProcessorClass(Abs.class);
