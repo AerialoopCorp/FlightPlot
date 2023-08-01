@@ -79,7 +79,7 @@ public class FlightPlot {
     }
 
     private static String appName = "FlightPlot";
-    private static String version = "1.1.1";
+    private static String version = "1.1.2";
     private static String appNameAndVersion = appName + " v." + version;
     private static String colorParamPrefix = "Color ";
     private final Preferences preferences;
