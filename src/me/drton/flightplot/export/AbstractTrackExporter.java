@@ -155,22 +155,22 @@ public abstract class AbstractTrackExporter implements TrackExporter {
                 writeGroupEnd();
             }
 
+            Map<String, Object> parameters = trackReader.getLogReader().getParameters();
+
+            writeGroupStart("RTL Points");
+
+            writeSinglePoint(getFromParams(parameters, "1"), "RTL 1");
+            writeSinglePoint(getFromParams(parameters, "2"), "RTL 2");
+            writeSinglePoint(getFromParams(parameters, "3"), "RTL 3");
+            writeSinglePoint(getFromParams(parameters, "4"), "RTL 4");
+            writeSinglePoint(getFromParams(parameters, "A"), "RTL A");
+            writeSinglePoint(getFromParams(parameters, "B"), "RTL B");
+            writeSinglePoint(getFromParams(parameters, "C"), "RTL C");
+            writeSinglePoint(getFromParams(parameters, "D"), "RTL D");
+
+            writeGroupEnd();
+
             if (trackReader.getLogReader() instanceof PX4LogReader) {
-                Map<String, Object> parameters = ((PX4LogReader)trackReader.getLogReader()).getParameters();
-
-                writeGroupStart("RTL Points");
-
-                writeSinglePoint(getFromParams(parameters, "1"), "RTL 1");
-                writeSinglePoint(getFromParams(parameters, "2"), "RTL 2");
-                writeSinglePoint(getFromParams(parameters, "3"), "RTL 3");
-                writeSinglePoint(getFromParams(parameters, "4"), "RTL 4");
-                writeSinglePoint(getFromParams(parameters, "A"), "RTL A");
-                writeSinglePoint(getFromParams(parameters, "B"), "RTL B");
-                writeSinglePoint(getFromParams(parameters, "C"), "RTL C");
-                writeSinglePoint(getFromParams(parameters, "D"), "RTL D");
-
-                writeGroupEnd();
-
                 writeGroupStart("Camera Triggers");
 
                 List<TrackPoint> triggers = ((PX4TrackReader)trackReader).camTriggers;

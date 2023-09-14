@@ -8,6 +8,7 @@ import me.drton.flightplot.processors.PlotProcessor;
 import me.drton.flightplot.processors.ProcessorsList;
 import me.drton.flightplot.processors.Simple;
 import me.drton.jmavlib.log.FormatErrorException;
+import me.drton.jmavlib.log.LogMessage;
 import me.drton.jmavlib.log.LogReader;
 import me.drton.jmavlib.log.MAVLinkLogReader;
 import me.drton.jmavlib.log.px4.MavlinkLog;
@@ -79,7 +80,7 @@ public class FlightPlot {
     }
 
     private static String appName = "FlightPlot";
-    private static String version = "1.1.2";
+    private static String version = "1.1.3";
     private static String appNameAndVersion = appName + " v." + version;
     private static String colorParamPrefix = "Color ";
     private final Preferences preferences;
@@ -921,21 +922,10 @@ public class FlightPlot {
         try {
             if (logFileNameLower.endsWith(".bin") || logFileNameLower.endsWith(".px4log")) {
                 logReaderNew = new PX4LogReader(logFileName, rememberFormats.getState());
-                for (MavlinkLog loggedMsg : ((PX4LogReader) logReaderNew).getMessages()) {
-                    long t = loggedMsg.timestamp / 1000;
-                    String time = String.format("%02d:%02d:%02d:%03d", t / 1000 / 60 / 60, t / 1000 / 60, ((t / 1000) % 60), t % 1000);
-                    logsTableModel.addRow(new Object[]{time, loggedMsg.getLevelStr(),
-                            loggedMsg.message});
-                }
+
             } else if (logFileNameLower.endsWith(".ulg")) {
-                ULogReader ulogReader = new ULogReader(logFileName);
-                logReaderNew = ulogReader;
-                for (MessageLog loggedMsg : ulogReader.loggedMessages) {
-                    long t = loggedMsg.timestamp / 1000;
-                    String time = String.format("%2d:%02d:%03d", t / 1000 / 60, ((t / 1000) % 60), t % 1000);
-                    logsTableModel.addRow(new Object[]{time, loggedMsg.getLevelStr(),
-                            loggedMsg.message});
-                }
+                logReaderNew = new ULogReader(logFileName);
+
             } else if (logFileNameLower.endsWith(".mavlink") || logFileNameLower.endsWith(".tlog")) {
                 try {
                     // for production build the following is needed to load the XML
@@ -947,6 +937,15 @@ public class FlightPlot {
             } else {
                 setStatus("Log format not supported: " + logFileName);
                 return;
+            }
+
+            if (logReaderNew.getMessages() != null) {
+                for (LogMessage loggedMsg : logReaderNew.getMessages()) {
+                    long t = loggedMsg.getTimestamp() / 1000;
+                    String time = String.format("%02d:%02d:%02d:%03d", t / 1000 / 60 / 60, t / 1000 / 60, ((t / 1000) % 60), t % 1000);
+                    logsTableModel.addRow(new Object[]{time, loggedMsg.getLevelStr(),
+                            loggedMsg.getMessage()});
+                }
             }
         } catch (Exception e) {
             setStatus("Error: " + e);
