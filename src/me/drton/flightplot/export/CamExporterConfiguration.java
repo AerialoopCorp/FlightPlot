@@ -12,7 +12,6 @@ public class CamExporterConfiguration {
     private final static String STARTING_NUMBER = "startingNumber";
 
     public void saveConfiguration(Preferences preferences) {
-        System.out.println("save");
         if (imageName != null) {
             preferences.put(IMAGE_NAME, imageName);
         }
@@ -20,7 +19,6 @@ public class CamExporterConfiguration {
     }
 
     public void loadConfiguration(Preferences preferences) {
-        System.out.println("load");
         imageName = preferences.get(IMAGE_NAME, "DSC%05d.JPG");
         startingNumber = preferences.getLong(STARTING_NUMBER, 1);
     }
