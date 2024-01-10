@@ -61,6 +61,8 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(4398046511104l, "PREC_LAND");
         sensors.put(8796093022208l, "NTRIP");
         sensors.put(17592186044416l, "BATTERY2");
+        sensors.put(35184372088832l, "DIFFPRESSURE2");
+        sensors.put(70368744177664l, "RAIL_POWER");
         states.put("HEAL.Sens", sensors);
         states.put("vehicle_status_0.onboard_control_sensors_health", sensors);
 
@@ -180,7 +182,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(1l, "TIMEOUT");
         sensors.put(2l, "MIN_ALT");
         sensors.put(4l, "AIRSPEED");
-        sensors.put(8l, "none");
+        sensors.put(8l, "ALTITUDE");
         sensors.put(16l, "Z_VEL");
         sensors.put(32l, "Z_ACC");
         sensors.put(64l, "ATT");
@@ -190,6 +192,7 @@ public class SensorHealth extends PlotProcessor {
         sensors.put(1024l, "MC_YAW");
         sensors.put(2048l, "MC_Z_VEL");
         sensors.put(4096l, "MC_ALT");
+        sensors.put(8192l, "COMMANDED");
         states.put("VTOL.FsMask", sensors);
         states.put("vtol_vehicle_status_0.failsafe_mask", sensors);
 

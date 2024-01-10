@@ -46,6 +46,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -57,6 +58,7 @@ import java.awt.geom.Ellipse2D;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -80,7 +82,7 @@ public class FlightPlot {
     }
 
     private static String appName = "FlightPlot";
-    private static String version = "1.1.5";
+    private static String version = "1.1.6";
     private static String appNameAndVersion = appName + " v." + version;
     private static String colorParamPrefix = "Color ";
     private final Preferences preferences;
@@ -712,6 +714,9 @@ public class FlightPlot {
         logsTableModel.addColumn("Message");
         logTable = new JTable(logsTableModel);
         logTable.getColumnModel().getColumn(2).setMinWidth(350);
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(JLabel.RIGHT);
+        logTable.getColumnModel().getColumn(0).setCellRenderer(rightRenderer);
         logTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         logTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
@@ -882,6 +887,9 @@ public class FlightPlot {
                     rangeOld.getUpperBound() + timeOffset * 1e-6), true, false);
             domainAxis.setDefaultAutoRange(new Range(logStart * 1e-6, (logStart + logSize) * 1e-6));
         }
+
+        // Also reload messages
+        loadMessages(logReader);
     }
 
     /**
@@ -939,14 +947,7 @@ public class FlightPlot {
                 return;
             }
 
-            if (logReaderNew.getMessages() != null) {
-                for (LogMessage loggedMsg : logReaderNew.getMessages()) {
-                    long t = loggedMsg.getTimestamp() / 1000;
-                    String time = String.format("%02d:%02d:%02d:%03d", t / 1000 / 60 / 60, t / 1000 / 60, ((t / 1000) % 60), t % 1000);
-                    logsTableModel.addRow(new Object[]{time, loggedMsg.getLevelStr(),
-                            loggedMsg.getMessage()});
-                }
-            }
+            loadMessages(logReaderNew);
         } catch (Exception e) {
             setStatus("Error: " + e);
             e.printStackTrace();
@@ -975,6 +976,31 @@ public class FlightPlot {
         chart.getXYPlot().getDomainAxis().setAutoRange(true);
         chart.getXYPlot().getRangeAxis().setAutoRange(true);
         processFile();
+    }
+
+    private void loadMessages(LogReader logReaderNew) {
+        logsTableModel.setRowCount(0);
+
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+        long timeOffset = getTimeOffset(timeMode);
+
+        if (logReaderNew.getMessages() != null) {
+            for (LogMessage loggedMsg : logReaderNew.getMessages()) {
+                long t = (loggedMsg.getTimestamp() + timeOffset) / 1000;
+
+                String time = "";
+                if (timeMode == TIME_MODE_GPS) {
+                    cal.setTimeInMillis(t);
+                    time = String.format("%02d:%02d:%02d:%03d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE),
+                            cal.get(Calendar.SECOND), cal.get(Calendar.MILLISECOND));
+                } else {
+                    time = String.format("%.3f", (double) t / 1000.0);
+                }
+
+                logsTableModel.addRow(new Object[]{time, loggedMsg.getLevelStr(),
+                        loggedMsg.getMessage()});
+            }
+        }
     }
 
     public void showImportPresetDialog() {
