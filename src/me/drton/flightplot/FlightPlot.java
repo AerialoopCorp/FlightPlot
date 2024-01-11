@@ -889,7 +889,7 @@ public class FlightPlot {
         }
 
         // Also reload messages
-        loadMessages(logReader);
+        loadMessages();
     }
 
     /**
@@ -946,8 +946,6 @@ public class FlightPlot {
                 setStatus("Log format not supported: " + logFileName);
                 return;
             }
-
-            loadMessages(logReaderNew);
         } catch (Exception e) {
             setStatus("Error: " + e);
             e.printStackTrace();
@@ -955,6 +953,7 @@ public class FlightPlot {
         }
 
         mainFrame.setTitle(appNameAndVersion + " - " + logFileName);
+
         if (logReader != null) {
             try {
                 logReader.close();
@@ -963,29 +962,36 @@ public class FlightPlot {
             }
             logReader = null;
         }
+
         logReader = logReaderNew;
+
         if (logReader.getErrors().size() > 0) {
             setStatus("Log file opened: " + logFileName + " (errors: " + logReader.getErrors().size() + ", see console output)");
             printLogErrors();
         } else {
             setStatus("Log file opened: " + logFileName);
         }
+
         logInfo.updateInfo(logReader);
         fieldsListDialog.setFieldsList(logReader.getFields());
         onTimeModeChanged();
         chart.getXYPlot().getDomainAxis().setAutoRange(true);
         chart.getXYPlot().getRangeAxis().setAutoRange(true);
+
         processFile();
+
+        loadMessages();
     }
 
-    private void loadMessages(LogReader logReaderNew) {
+    private void loadMessages() {
         logsTableModel.setRowCount(0);
 
         Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
-        long timeOffset = getTimeOffset(timeMode);
 
-        if (logReaderNew.getMessages() != null) {
-            for (LogMessage loggedMsg : logReaderNew.getMessages()) {
+        if (logReader != null && logReader.getMessages() != null) {
+            long timeOffset = getTimeOffset(timeMode);
+
+            for (LogMessage loggedMsg : logReader.getMessages()) {
                 long t = (loggedMsg.getTimestamp() + timeOffset) / 1000;
 
                 String time = "";
