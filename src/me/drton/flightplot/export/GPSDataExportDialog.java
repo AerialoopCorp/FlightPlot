@@ -261,19 +261,25 @@ public class GPSDataExportDialog extends JDialog {
                                 break;  // End of file
                             }
 
-                            Number len = (Number) data.get("GPD0.len");
-                            byte[] d = (byte[]) data.get("GPD0.data");
+                            Number len = (Number) data.get("gps_dump_0.len");
 
                             // len < 128 means it's data from the GPS (> 128 is data to the GPS)
 
                             if (len != null && len.intValue() < 128) {
+                                byte[] d = new byte[(int) len];
+                                for (int i = 0; i < (int) len; i++) {
+                                    d[i] = ((Integer) data.get("gps_dump_0.data[" + i + "]")).byteValue();
+                                }
                                 bos1.write(d, 0, len.intValue());
                             }
 
-                            len = (Number) data.get("GPD1.len");
-                            d = (byte[]) data.get("GPD1.data");
+                            len = (Number) data.get("gps_dump_1.len");
 
                             if (len != null && len.intValue() < 128) {
+                                byte[] d = new byte[(int) len];
+                                for (int i = 0; i < (int) len; i++) {
+                                    d[i] = ((Integer) data.get("gps_dump_1.data[" + i + "]")).byteValue();
+                                }
                                 bos2.write(d, 0, len.intValue());
                             }
 
