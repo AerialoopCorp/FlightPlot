@@ -3,6 +3,7 @@ package me.drton.flightplot;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import me.drton.jmavlib.log.LogReader;
+import me.drton.jmavlib.log.ulog.ULogReader;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -80,8 +81,26 @@ public class LogInfo {
             Map<String, Object> parameters = logReader.getParameters();
             List<String> keys = new ArrayList<String>(parameters.keySet());
             Collections.sort(keys);
-            for (String key : keys) {
-                parametersTableModel.addRow(new Object[]{key, parameters.get(key).toString()});
+
+            if (logReader instanceof ULogReader) {
+                Map<String, List<ULogReader.ParamUpdate>> allUpdates = ((ULogReader) logReader).parameterUpdates;
+                for (String key : keys) {
+                    List<ULogReader.ParamUpdate> updates = allUpdates.get(key);
+                    String lastValue = parameters.get(key).toString();
+                    Integer numUpdates = 0;
+
+                    if (updates != null) {
+                        numUpdates = updates.size();
+                        lastValue = updates.get(updates.size() - 1).getValue().toString();
+                    }
+
+                    parametersTableModel.addRow(new Object[]{key, parameters.get(key).toString(), numUpdates.toString(), lastValue});
+                }
+
+            } else {
+                for (String key : keys) {
+                    parametersTableModel.addRow(new Object[]{key, parameters.get(key).toString(), "-", "-"});
+                }
             }
 
             additionalContent.setText("");
@@ -118,6 +137,8 @@ public class LogInfo {
         };
         parametersTableModel.addColumn("Parameter");
         parametersTableModel.addColumn("Value");
+        parametersTableModel.addColumn("UC");
+        parametersTableModel.addColumn("Last Value");
         parametersTable = new JTable(parametersTableModel);
     }
 
